@@ -4,9 +4,9 @@ In this final lab we will put everything together into a complete frontend for a
 
 ## Learning outcomes
 
-In this (final) lab, we will introduce references. At a minimum your interpreter `vm.rs` should correctly handle references, local scopes and passing of arguments as references. To that end you may assume all variables (and references) to be mutable. In case of ill-formed programs, your interpreter may return with an error (or even panic).
+In this lab, we introduce references. At a minimum your interpreter `vm.rs` should correctly handle references, local scopes and passing of arguments as references. To that end you may assume all variables (and references) to be mutable. In case of ill-formed programs, your interpreter may return with an error (or even panic).
 
-The type checker `type_check` should at a minimum reject programs with ill formed types (without regard to life-times, mutability and aliasing).
+The type checker `type_check.rs` should at a minimum reject programs with ill formed types (without regard to life-times, mutability and aliasing).
 
 Optionally (towards higher grades) you can:
 
@@ -34,45 +34,45 @@ The files are structures as follows:
 
 Data structures:
 
-- `ast`, the internal representation of the parse tree, also used for semantic analysis and natural interpretation. (Notice, a realistic compiler typically use a large number of internal representations, AST -> HIR -> MIR -> ..., but we keep it simple here.)
+- `ast.rs`, the internal representation of the parse tree, also used for semantic analysis and natural interpretation. (Notice, a realistic compiler typically use a large number of internal representations, AST -> HIR -> MIR -> ..., but we keep it simple here.)
   
-- `ast_traits`, functionality to display the AST in readable form.
+- `ast_traits.rs`, functionality to display the AST in readable form.
   
-- `parse`, the parser.
+- `parse.rs`, the parser.
 
 API:s:
 
-- `error`, the definition of the error type.
+- `error.rs`, the definition of the error type.
 
-- `common`, common API for processing the AST.
+- `common.rs`, common API for processing the AST.
 
-- `env`, a generic stacked environment for interpretation and semantic analysis.
+- `env.rs`, a generic stacked environment for interpretation and semantic analysis.
   
 Analysis:
 
-- `type_check`, the type checker.
+- `type_check.rs`, the type checker.
 
-- `bc`, the optional borrow checker.
+- `bc.rs`, the optional borrow checker.
   
 Interpretation:
 
-- `vm`, an AST level interpreter for the natural semantics.
+- `vm.rs`, an AST level interpreter for the natural semantics.
 
 CLI:
 
-- `main`, provides a simple command line interface.
+- `main.rs`, provides a simple command line interface.
   
 Documentation:
 
-- `README`, this file.
+- `README.md`, this file.
   
-- `ebnf`, the EBNF grammar for RNR.
+- `ebnf.md`, the EBNF grammar for RNR.
   
-- `type_rules`, formalization of type rules for RNR.
+- `type_rules.md`, formalization of type rules for RNR.
   
-- `sos`, formalization of semantics for RNR.
+- `sos.md`, formalization of semantics for RNR.
   
-- `CHANGELOG`, tracking of project status.
+- `CHANGELOG.md`, tracking of project status.
 
 ---
 
