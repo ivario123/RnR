@@ -86,6 +86,6 @@ You can use this lab as the outset for your home exam. When you complete the man
 
 For higher grades, document the set of added features in the CHANGELOG.
 
-## Licence
+## License
 
 Let knowledge be free! Free to use for any purpose.
