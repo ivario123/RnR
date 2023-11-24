@@ -4,11 +4,11 @@ name = "rnr"
 version = "0.1.0"
 [dependencies]
 indented = "0.1.0"
-proc-macro2 = "1.0.28"
-quote = "1.0.9"
-regex = "1.5.4"
-structopt = "0.3.23"
+proc-macro2 = "1.0.69"
+quote = "1.0.33"
+regex = "1.10.2"
+structopt = "0.3.26"
 
 [dependencies.syn]
 features = ["full", "extra-traits"]
-version = "1.0.74"
+version = "2.0.39"

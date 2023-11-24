@@ -381,7 +381,8 @@ impl Parse for Parameters {
     fn parse(input: ParseStream) -> Result<Parameters> {
         let content;
         let _ = syn::parenthesized!(content in input);
-        let bl: Punctuated<Parameter, Token![,]> = content.parse_terminated(Parameter::parse)?;
+        let bl: Punctuated<Parameter, Token![,]> =
+            content.parse_terminated(Parameter::parse, Token![,])?;
         Ok(Parameters(bl.into_iter().collect()))
     }
 }
@@ -397,7 +398,7 @@ impl Parse for Arguments {
     fn parse(input: ParseStream) -> Result<Arguments> {
         let content;
         let _ = syn::parenthesized!(content in input);
-        let bl: Punctuated<Expr, Token![,]> = content.parse_terminated(Expr::parse)?;
+        let bl: Punctuated<Expr, Token![,]> = content.parse_terminated(Expr::parse, Token![,])?;
         Ok(Arguments(bl.into_iter().collect()))
     }
 }
