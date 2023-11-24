@@ -624,7 +624,7 @@ use syn::punctuated::Punctuated;
 //         let content;
 //         let _ = syn::braced!(content in input);
 
-//         let bl: Punctuated<Statement, Token![;]> = content.parse_terminated(Statement::parse)?;
+//         let bl: Punctuated<Statement, Token![;]> = content.parse_terminated(Statement::parse, Token![;])?;
 
 //         // We need to retrieve the semi before we collect into a vector
 //         // as into_iter consumes the value.
