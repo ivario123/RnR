@@ -1,5 +1,5 @@
 fn f(a: i32) {
-    let b = a;
+    let _b = a;
 }
 fn main() {
     f(7);

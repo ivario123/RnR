@@ -102,7 +102,7 @@ where
     pub fn get_ref(&self, id: &str) -> Option<Ref> {
         for scope in self.0.iter().rev() {
             if let Some(r) = scope.var.get(id) {
-                return Some(r.clone());
+                return Some(*r);
             }
         }
         None

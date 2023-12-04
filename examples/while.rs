@@ -1,5 +1,5 @@
 fn main() {
-    while true {
+    loop {
         while false {}
     }
 }

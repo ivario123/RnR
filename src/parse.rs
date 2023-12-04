@@ -189,10 +189,8 @@ fn test_expr_if_then_else() {
 fn test_if_then_else_nested_rust() {
     if false {
         2;
-    } else {
-        if true {
-            3 + 5;
-        }
+    } else if true {
+        3 + 5;
     };
 }
 
@@ -348,7 +346,7 @@ fn test_type_unit() {
 fn test_type_fail() {
     let ts: proc_macro2::TokenStream = "u32".parse().unwrap();
     let e: Result<Type> = syn::parse2(ts);
-    assert_eq!(e.is_err(), true);
+    assert!(e.is_err());
 }
 
 impl Parse for Parameter {
@@ -662,11 +660,9 @@ impl Parse for Block {
                     }
                 }
                 Statement::Assign(_, _) | Statement::Expr(_) => {
-                    if !content.is_empty() {
-                        if !has_semi {
-                            // generate an error (we know that it is not a ";")
-                            let _: Token![;] = content.parse()?;
-                        }
+                    if !content.is_empty() && !has_semi {
+                        // generate an error (we know that it is not a ";")
+                        let _: Token![;] = content.parse()?;
                     }
                 }
 
@@ -692,7 +688,7 @@ fn test_block_expr_fail() {
     let ts: proc_macro2::TokenStream = "{ let a = }".parse().unwrap();
     let stmt: Result<Statement> = syn::parse2(ts);
     println!("stmt {:?}", stmt);
-    assert_eq!(stmt.is_err(), true);
+    assert!(stmt.is_err());
 }
 
 #[test]
@@ -708,7 +704,7 @@ fn test_block_semi() {
     let bl: Block = syn::parse2(ts).unwrap();
     println!("bl {}", bl);
     assert_eq!(bl.statements.len(), 3);
-    assert_eq!(bl.semi, true);
+    assert!(bl.semi);
 }
 
 #[test]
@@ -724,7 +720,7 @@ fn test_block_no_semi() {
     let bl: Block = syn::parse2(ts).unwrap();
     println!("bl {}", bl);
     assert_eq!(bl.statements.len(), 3);
-    assert_eq!(bl.semi, false);
+    assert!(!bl.semi);
 }
 
 #[test]
@@ -741,7 +737,7 @@ fn test_block_fn() {
     let bl: Block = syn::parse2(ts).unwrap();
     println!("bl {}", bl);
     assert_eq!(bl.statements.len(), 4);
-    assert_eq!(bl.semi, false);
+    assert!(!bl.semi);
 }
 
 #[test]
@@ -758,7 +754,7 @@ fn test_block_while() {
     let bl: Block = syn::parse2(ts).unwrap();
     println!("bl {}", bl);
     assert_eq!(bl.statements.len(), 4);
-    assert_eq!(bl.semi, false);
+    assert!(!bl.semi);
 }
 
 #[test]
@@ -767,7 +763,7 @@ fn test_block2() {
     let bl: Block = syn::parse2(ts).unwrap();
     println!("bl {:?}", bl);
     assert_eq!(bl.statements.len(), 2);
-    assert_eq!(bl.semi, false);
+    assert!(!bl.semi);
 }
 
 #[test]
@@ -776,7 +772,7 @@ fn test_block_fail() {
     let bl: Result<Block> = syn::parse2(ts);
     println!("bl {:?}", bl);
 
-    assert_eq!(bl.is_err(), true);
+    assert!(bl.is_err());
 }
 
 impl Parse for Prog {

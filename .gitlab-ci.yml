@@ -1,0 +1,45 @@
+stages:
+  - lint
+  - test
+.install_dependencies:
+  before_script:
+    script:
+      - curl https://sh.rustup.rs -sSf | sh -s -- -y
+      - source "$HOME/.cargo/env"
+
+tests:
+  only:
+    changes:
+      - src/*
+      - examples/*
+      - .gitlab-ci.yml
+  tags: [vhdl]
+  stage: test
+  image: rust:latest
+  script:    
+    - cargo test -- --show-output
+
+example_tests:
+  only:
+    changes:
+      - src/*
+      - examples/*
+      - .gitlab-ci.yml
+  tags: [vhdl]
+  stage: test
+  image: rust:latest
+  script:
+    - cargo test --examples -- --show-output
+
+clippy:
+  only:
+    changes:
+      - src/*
+      - examples/*
+      - .gitlab-ci.yml
+  tags: [vhdl]
+  stage: lint
+  image: rust:latest
+  script:
+    - cargo clippy
+

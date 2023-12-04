@@ -7,11 +7,11 @@ fn main() {
     let mut a = 0;
     f(
         {
-            a = a + 1;
+            a += 1;
             a
         },
         {
-            a = a + 2;
+            a += 2;
             a
         },
     );

@@ -3,7 +3,7 @@ use crate::common::Eval;
 use crate::env::{Env, Ref};
 use crate::error::Error;
 
-use std::convert::{From, Into};
+use std::convert::{From};
 use std::fmt::Debug;
 
 // type check
@@ -37,7 +37,7 @@ impl Op {
 // General unification
 fn unify(expected: Ty, got: Ty, result: Ty) -> Result<(Ty, Option<Ref>), Error> {
     match expected == got {
-        true => Ok((result.into(), None)),
+        true => Ok((result, None)),
         _ => Err(format!(
             "Cannot unify types, expected {:?} got {:?}",
             expected, got
@@ -173,7 +173,7 @@ mod tests {
         ",
         );
 
-        assert_eq!(v.is_err(), true);
+        assert!(v.is_err());
     }
 
     #[test]
@@ -221,7 +221,7 @@ mod tests {
         ",
         );
 
-        assert_eq!(v.is_err(), true);
+        assert!(v.is_err());
     }
 
     #[test]
@@ -256,7 +256,7 @@ mod tests {
         ",
         );
 
-        assert_eq!(v.is_err(), true);
+        assert!(v.is_err());
     }
 
     #[test]
@@ -419,7 +419,7 @@ mod tests {
         ",
         );
         println!("v {:?}", v);
-        assert_eq!(v.is_err(), true);
+        assert!(v.is_err());
     }
 
     #[test]
@@ -438,7 +438,7 @@ mod tests {
         ",
         );
         println!("v {:?}", v);
-        assert_eq!(v.is_err(), true);
+        assert!(v.is_err());
     }
 
     #[test]

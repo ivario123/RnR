@@ -1,6 +1,6 @@
 fn main() {
     fn a() {
-        fn a(i: i32) {
+        fn a(_i: i32) {
             a(1);
         }
 

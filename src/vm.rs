@@ -258,7 +258,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_bool().unwrap(), false);
+        assert!(!v.unwrap().get_bool().unwrap());
     }
 
     #[test]
@@ -272,7 +272,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_bool().unwrap(), true);
+        assert!(v.unwrap().get_bool().unwrap());
     }
 
     #[test]
@@ -286,7 +286,7 @@ mod tests {
     ",
         );
 
-        assert_eq!(v.unwrap().get_bool().unwrap(), false);
+        assert!(!v.unwrap().get_bool().unwrap());
     }
 
     #[test]
