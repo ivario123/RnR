@@ -41,7 +41,6 @@ impl Eval<Bc> for FnDeclaration {
         todo!("not implemented {:?}", self)
     }
 }
-
 impl Eval<Bc> for Prog {
     fn eval(&self, env: &mut Env<Bc>) -> Result<(Bc, Option<Ref>), Error> {
         todo!("not implemented {:?}", self)

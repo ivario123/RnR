@@ -1,509 +1,287 @@
-use crate::ast::{Block, Expr, FnDeclaration, Literal, Op, Prog, Type};
-use crate::common::Eval;
-use crate::env::{Env, Ref};
-use crate::error::Error;
+pub mod block;
+pub mod expr;
+pub mod statement;
 
-use std::convert::{From};
-use std::fmt::Debug;
+pub use block::*;
+pub use expr::*;
+pub use statement::*;
 
-// type check
-#[derive(Debug, Clone, PartialEq)]
-pub enum Ty {
-    Lit(Type),
-    Ref(Ref),
-    Mut(Box<Ty>),
+use crate::ast::Type;
+
+use std::collections::HashMap;
+
+// So let's implement a type checker
+// Here we go!!!!
+
+type TypeErr = String;
+
+/// Describes all of the needed data for a value.
+#[derive(Debug, Clone)]
+pub struct ValueMeta {
+    ty: Option<Type>,
+    assigned: bool,
+    mutable: bool,
+}
+#[derive(Debug, Clone)]
+pub struct FunctionMeta {
+    ty: Type,
+    /// The variable scope, this should include
+    /// all arguments and their types
+    args: Vec<(Type, bool)>,
 }
 
-// Helpers for Ty
-impl From<&Literal> for Ty {
-    fn from(t: &Literal) -> Self {
-        Ty::Lit(match *t {
-            Literal::Bool(_) => Type::Bool,
-            Literal::Int(_) => Type::I32,
-            Literal::String(_) => Type::String,
-            Literal::Unit => Type::Unit,
-        })
-    }
-}
+/// Represents the functions accessible in the current scope
+pub type FunctionScope = HashMap<String, FunctionMeta>;
 
-// Helper for Op
-impl Op {
-    // Evaluate operator to literal
-    fn unify(&self, left: Ty, right: Ty) -> Result<(Ty, Option<Ref>), Error> {
-        todo!()
-    }
-}
+/// Represents a specific scope.
+/// For example a block has it's own scope.
+pub type Scope = HashMap<String, ValueMeta>;
+/// Represents all program [`Scope`]s
+pub type TypeEnv = Vec<(Scope, FunctionScope)>;
 
-// General unification
-fn unify(expected: Ty, got: Ty, result: Ty) -> Result<(Ty, Option<Ref>), Error> {
-    match expected == got {
-        true => Ok((result, None)),
-        _ => Err(format!(
-            "Cannot unify types, expected {:?} got {:?}",
-            expected, got
-        )),
-    }
-}
-
-impl Eval<Ty> for Expr {
-    fn eval(&self, env: &mut Env<Ty>) -> Result<(Ty, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
-}
-
-impl Eval<Ty> for Block {
-    fn eval(&self, env: &mut Env<Ty>) -> Result<(Ty, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
-}
-
-impl Eval<Ty> for FnDeclaration {
-    fn eval(&self, env: &mut Env<Ty>) -> Result<(Ty, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
-}
-
-impl Eval<Ty> for Prog {
-    fn eval(&self, env: &mut Env<Ty>) -> Result<(Ty, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
+/// Denotes that a type is simply TypeCheckable.
+///
+/// This means that given the current vec of all
+/// [`Scope`]s and the index of the current scope.
+pub trait TypeCheck {
+    type ReturnType;
+    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr>;
 }
 
 #[cfg(test)]
-mod tests {
-    use super::Ty;
-    use crate::ast::{Block, Prog, Type};
-    use crate::common::parse_test;
+mod test {
+    use super::*;
+    use crate::ast::{Block, Expr, Statement};
 
     #[test]
-    fn test_block_let() {
-        let v = parse_test::<Block, Ty>(
-            "
-    {
-        let a: i32 = 1;
-        let b: i32 = 2;
-
-        a + b
-    }",
-        );
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_block_let_shadow() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a: i32 = 1;
-            let b: i32 = 2;
-            let a: i32 = 3;
-            let b: i32 = 4;
-
-            a + b
-        }",
-        );
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_block_assign() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let mut a: i32 = 1;
-            a = 1 + 2;
-            a
-        }",
-        );
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_expr_if_then_else() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let mut a: i32 = 1;
-            a = if a > 0 { a + 1 } else { a - 2 };
-            a
-        }",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_expr_if_then_else_bool() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let mut a: bool = false;
-            a = if a || false { a || false } else { a && true };
-            a
-        }",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::Bool));
-    }
-
-    #[test]
-    fn test_ref_deref() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a: i32 = 1;
-            let b: &i32 = &a;
-            *b
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_ref_deref_err() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a: i32 = 1;
-            let b: &bool = &a;
-            *b
-        }
-        ",
-        );
-
-        assert!(v.is_err());
-    }
-
-    #[test]
-    fn test_ref_deref_indirect() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 1;
-            let b = &a;
-            let c = b;
-            *c
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_ref_deref_indirect2() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 1;
-            let b = &a;
-            let c = &b;
-            **c
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_deref_assign_err() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 1;
-            let b = &a;
-            *b = false;
-            a
-        }
-        ",
-        );
-
-        assert!(v.is_err());
-    }
-
-    #[test]
-    fn test_deref_assign() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 1;
-            let b = &a;
-            *b = 7;
-            a
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_while_err() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 2;
-            let b = false;
-            while a > 0 {
-                a = a - 1;
-                b = b + 1;
-            }
-            b
-        }
-        ",
-        );
-
-        assert!(v.is_err());
-    }
-
-    #[test]
-    fn test_while() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 2;
-            let b = 1;
-            while a > 0 {
-                a = a - 1;
-                b = b + 1;
-            }
-            b
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-    #[test]
-    fn test_while_ref() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 2;
-            let b = 0;
-            let c = &b;
-            while a > 0 {
-                a = a - 1;
-                *c = (*c) + 1;
-            }
-            *c
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_while_ref2() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 2;
-            let b = 0;
-            let c = &b;
-            let d = &a;
-
-            while (*d) > 0 {
-                *d = (*d) - 1;
-                // not sure if this is even allowed in Rust
-                *&*c = (*c) + 1;
-            }
-            *c
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_bool() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = true && false;
-            a
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::Bool));
-    }
-
-    #[test]
-    fn test_bool_bang() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = true && !false;
-            a
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::Bool));
-    }
-
-    #[test]
-    fn test_bool_bang2() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = (!true) && false;
-            a
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::Bool));
-    }
-
-    #[test]
-    fn test_local_block() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 1;
-            {
-                let b = &a;
-                *b = 2;
-            };
-            a
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_local_block_assign() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = 6;
-            let b = {
-                let b : &i32 = &a;
-                *b = (*b) + 1;
-                *b
-            };
-            b
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
-    }
-
-    #[test]
-    fn test_prog_fn_sig() {
-        let v = parse_test::<Prog, Ty>(
-            "
-        fn a(i: i32, bo: bool) -> i32 {
-            let q = 0;
-            fn b(j: i32) -> i32 {
-                a(j, c())
-            }
-
-            fn c() -> bool {
-                false
-            }
-
-            b(1 + i);
-            a(i, bo)
-        }
-        ",
-        );
-        println!("v {:?}", v);
-        assert!(v.is_err());
-    }
-
-    #[test]
-    fn test_prog_fn_defined_twice() {
-        let v = parse_test::<Prog, Ty>(
-            "
-        fn a() {
-        }
-
-        fn b() {
-            fn b() {
-
-            }
-
-        }
-        ",
-        );
-        println!("v {:?}", v);
-        assert!(v.is_err());
-    }
-
-    #[test]
-    fn test_prog() {
-        let v = parse_test::<Prog, Ty>(
-            "
-        fn main() {
-            let a = 1;
+    fn test_expr_stmt_while() {
+        let ts: proc_macro2::TokenStream = "
+        while true {
+            let mut a: i32 = 5;
+            a = 5;
             a;
-        }
-        ",
-        );
-        println!("v {:?}", v);
-        assert_eq!(v.unwrap_err(), "Ok");
+        }"
+        .parse()
+        .unwrap();
+        let e: Statement = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let len = env.len();
+        let ty = e.check(&mut env, len).unwrap();
+        assert_eq!(ty, Type::Unit);
     }
 
     #[test]
-    fn test_local_fn() {
-        let v = parse_test::<Prog, Ty>(
-            "
-        fn main() {
-            fn f(i: i32, j: i32) -> i32 {
-                i + j
-            }
-            let a = f(1, 2);
-            // println!(\"a = {} and another a = {}\", a, a);
-        }
-        ",
+    fn test_expr_stmt_let() {
+        let ts: proc_macro2::TokenStream = "let a: i32 = 5 + a".parse().unwrap();
+        let e: Statement = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: false,
+            },
         );
-        println!("v {:?}", v);
-        assert_eq!(v.unwrap_err(), "Ok");
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::Unit);
+    }
+
+    #[test]
+    fn test_expr_stmt() {
+        let ts: proc_macro2::TokenStream = "a + 1 + (5 - 5) * 8".parse().unwrap();
+        let e: Statement = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: false,
+            },
+        );
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::I32);
+    }
+
+    #[test]
+    fn test_expr_assign() {
+        let ts: proc_macro2::TokenStream = "a = 1 + a".parse().unwrap();
+        let e: Statement = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: true,
+            },
+        );
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::Unit);
+    }
+
+    #[test]
+    fn test_expr_assign_fail() {
+        let ts: proc_macro2::TokenStream = "a = 1 + false".parse().unwrap();
+        let e: Statement = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: true,
+            },
+        );
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0);
+        assert!(ty.is_err());
+    }
+    #[test]
+    fn test_block() {
+        let ts: proc_macro2::TokenStream = "
+    {
+        let a: i32 = 0;
+        let a: bool = false;
+        a
+    }"
+        .parse()
+        .unwrap();
+        let e: Block = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: false,
+            },
+        );
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::Bool);
     }
 
     #[test]
     fn test_check_if_then_else_shadowing() {
-        let v = parse_test::<Block, Ty>(
-            "
+        let ts: proc_macro2::TokenStream = "
         {
-            let a: i32 = 1 + 2; // a == 3
-            let a: i32 = 2 + a; // a == 5
-            if true {
-                a = a - 1;      // outer a == 4
-                let a: i32 = 0; // inner a == 0
+            let mut a: i32 = 1 + 2; // a == 3
+            let mut a: i32 = 2 + a; // a == 5
+            if true { 
+                a = a - 1;      // outer a == 4 
+                let mut a: i32 = 0; // inner a == 0 
                 a = a + 1       // inner a == 1
-            } else {
-                a = a - 1
+            } else { 
+                a = a - 1 
             };
             a   // a == 4
         }
-        ",
+        "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {}", bl);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: false,
+            },
         );
+        env.push((scope, HashMap::new()));
+        let ty = bl.check(&mut env, 0).unwrap();
 
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
+        assert_eq!(ty, Type::I32);
+    }
+    #[test]
+    fn test_id() {
+        let ts: proc_macro2::TokenStream = "a".parse().unwrap();
+        let e: Expr = syn::parse2(ts).unwrap();
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: false,
+            },
+        );
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::I32);
     }
 
     #[test]
-    fn test_ref() {
-        let v = parse_test::<Block, Ty>(
-            "
-        {
-            let a = &1;
-            *a
-        }
-        ",
+    fn test_lit_i32() {
+        let ts: proc_macro2::TokenStream = "123".parse().unwrap();
+        let e: Expr = syn::parse2(ts).unwrap();
+        let mut env = TypeEnv::new();
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::I32);
+    }
+
+    #[test]
+    fn test_expr() {
+        let ts: proc_macro2::TokenStream = "a + 1 + (5 - 5) * 8".parse().unwrap();
+        let e: Expr = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "a".to_string(),
+            ValueMeta {
+                ty: Some(Type::I32),
+                assigned: false,
+                mutable: false,
+            },
         );
-        assert_eq!(v.unwrap(), Ty::Lit(Type::I32));
+        env.push((scope, HashMap::new()));
+        let len = env.len();
+        let ty = e.check(&mut env, len).unwrap();
+        assert_eq!(ty, Type::I32);
+    }
+
+    #[test]
+    fn test_expr_if_then_else() {
+        let ts: proc_macro2::TokenStream = "
+        if true { false } else { b }
+        "
+        .parse()
+        .unwrap();
+        let e: Expr = syn::parse2(ts).unwrap();
+        println!("{}", e);
+        let mut env = TypeEnv::new();
+        let mut scope = Scope::new();
+        scope.insert(
+            "b".to_string(),
+            ValueMeta {
+                ty: Some(Type::Bool),
+                assigned: false,
+                mutable: false,
+            },
+        );
+        env.push((scope, HashMap::new()));
+        let ty = e.check(&mut env, 0).unwrap();
+        assert_eq!(ty, Type::Bool);
     }
 }

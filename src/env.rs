@@ -1,7 +1,7 @@
 // Type generic environment
 
 use crate::error::Error;
-use crate::{ast::FnDeclaration, intrinsics::Intrinsic};
+use crate::{ast::Expr, ast::Func, intrinsics::Intrinsic};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 
@@ -114,7 +114,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct FnEnv(pub HashMap<String, (FnDeclaration, Option<Intrinsic>)>);
+pub struct FnEnv(pub HashMap<String, (Func, Option<Intrinsic>)>);
 
 impl Debug for FnEnv {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -131,19 +131,20 @@ impl FnEnv {
         FnEnv(HashMap::new())
     }
 
-    pub fn add_functions_unique(&mut self, new_fns: Vec<FnDeclaration>) -> Result<(), Error> {
+    pub fn add_functions_unique(&mut self, new_fns: Vec<Func>) -> Result<(), Error> {
         let mut hm = HashSet::new();
-        for f in new_fns.clone() {
-            match hm.get(&f.id) {
+        for f in new_fns {
+            let id = match f.id {
+                Expr::Ident(i) => Ok(&i),
+                e => Err(format!("Cannot treat {e} as an identifier")),
+            }?;
+            match hm.get(id) {
                 Some(_) => Err(&format!("Function {} already defined", f.id))?,
                 None => {
-                    hm.insert(f.id.clone());
+                    hm.insert(*id);
                 }
             };
-        }
-
-        for f in new_fns {
-            self.0.insert(f.id.clone(), (f, None));
+            self.0.insert(*id, (f, None));
         }
         Ok(())
     }
