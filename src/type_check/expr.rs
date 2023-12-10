@@ -1,4 +1,4 @@
-use super::{Scope, TypeEnv, TypeErr};
+use super::{TypeEnv, TypeErr};
 use crate::ast::{Expr, Literal, Operation, Type};
 
 impl super::TypeCheck for Expr {
@@ -21,34 +21,7 @@ impl super::TypeCheck for Expr {
                 (_, 0) => Err("variable not found".to_string()),
                 (_, _) => return self.check(env, idx - 1),
             },
-            Expr::Lit(Literal::Int(_)) => Ok(Type::I32),
-            Expr::Lit(Literal::Bool(_)) => Ok(Type::Bool),
-            Expr::Lit(Literal::Unit) => Ok(Type::Unit),
-            Expr::Lit(Literal::Array(arr)) => {
-                let types: Vec<Result<Self::ReturnType, TypeErr>> = arr
-                    .iter()
-                    .map(|el| Expr::Lit((**el).clone()).check(env, env.len() - 1))
-                    .collect();
-                let first_type: Type = match arr.first() {
-                    Some(el) => Expr::Lit((**el).clone()).check(env, env.len() - 1)?,
-                    None => Type::Unit,
-                };
-                for ty in types {
-                    match ty {
-                        Ok(ty) => {
-                            if ty != first_type {
-                                return Err(format!(
-                                    "Array has inconcistent types, expected {first_type} got {ty}"
-                                ));
-                            }
-                        }
-                        Err(e) => return Err(e),
-                    }
-                }
-
-                Ok(first_type)
-            }
-
+            Expr::Lit(l) => l.check(env, env.len() - 1),
             Expr::BinOp(op, l, r) => {
                 let lhs = (*l).check(env, env.len() - 1)?;
                 let rhs = (*r).check(env, env.len() - 1)?;
@@ -59,7 +32,7 @@ impl super::TypeCheck for Expr {
                         op, lhs, op, rhs
                     ));
                 }
-                Ok(op.return_type())
+                Ok(op.return_type((lhs, rhs)))
             }
 
             Expr::Par(e) => (*e).check(env, env.len() - 1),
@@ -87,8 +60,9 @@ impl super::TypeCheck for Expr {
                 }
             }
             Expr::UnOp(op, e) => {
-                let expected = op.return_type();
                 let got = (*e).check(env, env.len() - 1)?;
+                let expected = op.return_type(got.clone());
+
                 match op.type_check(got.clone()) {
                     true => Ok(expected),
                     false => Err(format!("Cannot perform {op} on {got}")),
@@ -110,114 +84,50 @@ impl super::TypeCheck for Expr {
                 }
                 ret
             }
-            Expr::Index(id, index) => {
-                let id = match *id {
-                    Expr::Ident(id) => id,
-                    ty => return Err(format!("{ty} does not implement index")),
-                };
-                let env: &Scope = &env.get(idx).unwrap().0;
-                match env.get(&id) {
-                    Some(meta) => {
-                        if !meta.assigned {
-                            return Err(
-                                "Cannot index type that has not been initialized".to_string()
-                            );
-                        };
-                        match meta.ty.clone() {
-                            Some(Type::Array(ty, size)) => {
-                                // If the idx is a constant we can check it
-                                if let Expr::Lit(Literal::Int(idx)) = *index {
-                                    if idx as usize >= size {
-                                        return Err(format!("Cannot access element at index {idx} since array is of size {size}"));
-                                    }
-                                }
-                                Ok(*ty)
-                            }
-                            Some(ty) => return Err(format!("{ty} does not implement index")),
-                            None => return Err("Type must be known at this point".to_string()),
-                        }
-                    }
-                    _ => Err(format!("Usage of undecleared variable {id}")),
-                }
-            }
-            Expr::IndexMut(id, index) => {
-                let id = match *id {
-                    Expr::Ident(id) => id,
-                    ty => return Err(format!("{ty} does not implement index")),
-                };
-                match env.get(idx).unwrap().0.get(&id) {
-                    Some(meta) => {
-                        if !meta.mutable {
-                            return Err(
-                                "Cannot get a mutable element from immutable value".to_string()
-                            );
-                        }
-                        if !meta.assigned {
-                            return Err(
-                                "Cannot index type that has not been initialized".to_string()
-                            );
-                        };
-                        match meta.ty.clone() {
-                            Some(Type::Array(ty, size)) => {
-                                // If the idx is a constant we can check it
-                                if let Expr::Lit(Literal::Int(idx)) = *index {
-                                    if idx as usize >= size {
-                                        return Err(format!("Cannot access element at index {idx} since array is of size {size}"));
-                                    }
-                                }
-                                Ok(*ty)
-                            }
-                            Some(ty) => return Err(format!("{ty} does not implement index")),
-                            None => return Err("Type must be known at this point".to_string()),
-                        }
-                    }
-                    _ => Err(format!("Usage of undecleared variable {id}")),
-                }
-            }
-            Expr::FuncCall(fncall) => {
-                let mut args: Vec<Type> = vec![];
-                for arg in fncall.args.iter() {
-                    args.push(arg.check(env, idx)?)
-                }
-
-                let id = match *fncall.id {
-                    Expr::Ident(id) => id,
-                    e => return Err(format!("Cannot treat {e} as a function identifier.")),
-                };
-
-                let this_fnenv: &super::FunctionScope = match env.get(idx) {
-                    Some(envs) => &envs.1,
-                    None => return Err("Invalid scoping".to_owned()),
-                };
-                let fndec = match (this_fnenv.get(&id), idx) {
-                    (Some(fndec), _) => fndec,
-                    (_, 0) => return Err(format!("Tried to call undefined function {id}")),
-                    (_, idx) => return self.check(env, idx),
-                };
-                if fndec.args.len() != args.len() {
-                    return Err(format!(
-                        "Expected {} arguments but got {}",
-                        fndec.args.len(),
-                        args.len()
-                    ));
-                }
-                let mut args: Vec<(usize, (&(Type, bool), &Type))> =
-                    fndec.args.iter().zip(args.iter()).enumerate().collect();
-                while let Some((idx, ((expected_ty, _expected_mutable), got))) = args.pop() {
-                    // Check them in order
-                    if *got != *expected_ty {
-                        return Err(format!(
-                            "Expected argument nr {idx} to be of type {expected_ty} but got {got}"
-                        ));
-                    }
-                }
-                Ok(fndec.ty.clone())
-            }
+            Expr::Index(id, arr_index) => index(id, arr_index, false, env, idx),
+            Expr::IndexMut(id, arr_index) => index(id, arr_index, true, env, idx),
+            Expr::FuncCall(fncall) => fncall.check(env, idx),
         };
         match (ret, idx) {
             (Ok(value), _) => Ok(value),
             (Err(e), 0) => Err(e),
             (Err(_), idx) => self.check(env, idx - 1),
         }
+    }
+}
+fn index(
+    id: Box<Expr>,
+    index: Box<Expr>,
+    mutable: bool,
+    env: &mut TypeEnv,
+    idx: usize,
+) -> Result<Type, TypeErr> {
+    let id = match *id {
+        Expr::Ident(id) => id,
+        ty => return Err(format!("{ty} does not implement index")),
+    };
+    match env.get(idx).unwrap().0.get(&id) {
+        Some(meta) => {
+            if !meta.mutable && mutable {
+                return Err("Cannot get a mutable element from immutable value".to_string());
+            }
+            if !meta.assigned {
+                return Err("Cannot index type that has not been initialized".to_string());
+            };
+            match meta.ty.clone() {
+                Some(Type::Array(ty, size)) => {
+                    // If the idx is a constant we can check it
+                    if let Expr::Lit(Literal::Int(idx)) = *index {
+                        if idx as usize >= size {
+                            return Err(format!("Cannot access element at index {idx} since array is of size {size}"));
+                        }
+                    }
+                    Ok(*ty)
+                }
+                Some(ty) => return Err(format!("{ty} does not implement index")),
+                None => return Err("Type must be known at this point".to_string()),
+            }
+        }
+        _ => Err(format!("Usage of undecleared variable {id}")),
     }
 }

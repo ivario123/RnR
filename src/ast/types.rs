@@ -7,5 +7,15 @@ pub enum Type {
     Unit,
     Usize,
     Array(Box<Type>, usize),
-    Ref(Box<Type>),
+    Ref(Ref),
+    String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Ref(pub Box<Type>);
+
+impl From<Type> for Ref {
+    fn from(value: Type) -> Self {
+        Ref(Box::new(value))
+    }
 }

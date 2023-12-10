@@ -27,15 +27,17 @@ impl Parse for Type {
         } else if input.peek(Token![&]) {
             let _: Token![&] = input.parse()?;
             let t: Type = input.parse()?;
-            return Ok(Type::Ref(Box::new(t)));
+            return Ok(Type::Ref(t.into()));
         }
         let t: syn::Type = input.parse()?;
+
         let ts = quote! {#t}.to_string();
         match ts.as_str() {
             "i32" => Ok(Type::I32),
             "bool" => Ok(Type::Bool),
             "usize" => Ok(Type::Usize),
             "()" => Ok(Type::Unit),
+            "String" => Ok(Type::String),
             _ =>
             // to explicitly create an error at the current position
             {

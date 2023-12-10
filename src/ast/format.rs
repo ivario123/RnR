@@ -1,13 +1,37 @@
+use super::{Arg, Func, FuncCall, Prog};
 use crate::ast::{BinaryOp, Block, Expr, Literal, Statement, Type, UnaryOp};
+
 use std::fmt::{self};
+
 mod sealed {
+
     pub trait InteralFormat {
         fn fmt_internal(&self, indent: usize) -> String;
     }
 }
 use sealed::*;
 
-use super::{Arg, Func, FuncCall};
+macro_rules! fmt {
+    ($($id:ident,)+) => {
+        $(
+            impl std::fmt::Display for $id {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    write!(f, "{}", self.fmt_internal(0))
+                }
+            }
+        )+
+    };
+}
+impl InteralFormat for Prog {
+    fn fmt_internal(&self, indent: usize) -> String {
+        self.statements
+            .iter()
+            .map(|el| format!("{el}"))
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+}
+
 impl InteralFormat for Statement {
     fn fmt_internal(&self, indent: usize) -> String {
         let str = match self {
@@ -132,12 +156,7 @@ impl fmt::Display for BinaryOp {
         write!(f, "{}", s)
     }
 }
-
-impl fmt::Display for Block {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.fmt_internal(0))
-    }
-}
+fmt!(Prog, Block, Func,);
 
 impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -205,16 +224,12 @@ impl fmt::Display for Arg {
         )
     }
 }
-impl fmt::Display for Func {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.fmt_internal(0))
-    }
-}
 impl fmt::Display for UnaryOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             UnaryOp::Not => "!",
             UnaryOp::Subtract => "-",
+            UnaryOp::Borrow => "&",
         };
         write!(f, "{}", s)
     }
@@ -250,7 +265,8 @@ impl fmt::Display for Type {
             Type::Unit => "()".to_owned(),
             Type::Usize => "usize".to_owned(),
             Type::Array(ty, size) => format!("[{ty};{size}]"),
-            Type::Ref(ty) => format!("& {ty}"),
+            Type::Ref(crate::ast::types::Ref(ty)) => format!("& {ty}"),
+            Type::String => format!("String"),
         };
         write!(f, "{}", s)
     }

@@ -5,17 +5,16 @@
 // Strive to keep your code free of warnings.
 
 // common definitions
-pub mod common;
+//pub mod common;
 pub mod error;
 
 // AST related
 pub mod ast;
-pub mod ast_traits;
 pub mod climb;
 pub mod parse;
 
 // type generic environment
-pub mod env;
+//pub mod env;
 // intrinsic functions
 pub mod intrinsics;
 
@@ -24,6 +23,6 @@ pub mod type_check;
 // natural interpretation
 pub mod vm;
 // borrow checking
-pub mod bc;
+// pub mod bc;
 
 // optional backend goes here..

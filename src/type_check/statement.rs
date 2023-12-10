@@ -1,9 +1,8 @@
-use std::collections::HashMap;
+
 
 use super::{TypeEnv, TypeErr, ValueMeta};
 use crate::{
     ast::{Expr, Statement, Type},
-    type_check::{FunctionMeta},
 };
 
 impl super::TypeCheck for Statement {
@@ -126,70 +125,7 @@ impl super::TypeCheck for Statement {
                 Ok(ty) => Ok(Some(ty)),
                 Err(e) => Err(e),
             },
-            Statement::FnDecleration(func) => {
-                // We have a function decleration, this should be inserted into the fn env and then
-                // the 0th env and a new function env should be used to check wether or not the
-                // internal code is valid
-
-                let id = match func.id {
-                    Expr::Ident(id) => Ok(id),
-                    exp => Err(format!("Cannot treat {exp} as a function identifier")),
-                }?;
-                let args: Vec<(Expr, Type, bool)> = func
-                    .args
-                    .iter()
-                    .map(|arg| (arg.id.clone(), arg.ty.clone(), arg.mutable))
-                    .collect();
-
-                // Add in the new function and assume correctly typed for now
-                env.get_mut(idx).unwrap().1.insert(
-                    id,
-                    FunctionMeta {
-                        ty: func.ty.clone(),
-                        args: args
-                            .iter()
-                            .map(|(_id, ty, mutable)| (ty.clone(), *mutable))
-                            .collect(),
-                    },
-                );
-
-                // Give function scope access to global scope and all of the accessible functions
-                let mut new_env = TypeEnv::new();
-                let mut idx = 0;
-                while let Some(env) = env.get(idx) {
-                    let t_env = if idx == 0 {
-                        env.0.clone()
-                    } else {
-                        HashMap::new()
-                    };
-
-                    new_env.push((t_env, env.1.clone()));
-                    idx += 1;
-                }
-                new_env.push((HashMap::new(), HashMap::new()));
-                let len = new_env.len();
-                for (id, ty, mutable) in args {
-                    let id = match id {
-                        Expr::Ident(id) => id,
-                        _ => unreachable!(),
-                    };
-                    new_env.get_mut(len - 1).unwrap().0.insert(
-                        id.clone(),
-                        ValueMeta {
-                            ty: Some(ty.clone()),
-                            assigned: true,
-                            mutable,
-                        },
-                    );
-                }
-                let ret_ty = func.body.check(&mut new_env, idx)?;
-                // Allow mutable access to global scope
-                env.get_mut(0).unwrap().0 = new_env.get(0).unwrap().0.clone();
-                if ret_ty != func.ty {
-                    return Err(format!("Expected {} but got {ret_ty}", func.ty));
-                }
-                Ok(Some(ret_ty))
-            }
+            Statement::FnDecleration(func) => func.check(env, idx),
         };
         match (ret, idx) {
             (Ok(Some(value)), _) => Ok(value),

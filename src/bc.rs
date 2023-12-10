@@ -1,7 +1,8 @@
-use crate::ast::{Block, Expr, FnDeclaration, Prog};
+use crate::ast::{program::Prog, types::Ref, Block, Expr, Func as FnDeclaration};
 use crate::common::Eval;
-use crate::env::{Env, Ref};
+//use crate::env::{Env, Ref};
 use crate::error::Error;
+use crate::type_check::TypeEnv;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Loan {

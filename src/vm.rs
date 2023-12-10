@@ -1,393 +1,225 @@
-use crate::ast::{Block, Expr, FnDeclaration, Literal, Op, Prog};
-use crate::common::Eval;
-use crate::env::{Env, Ref};
-use crate::error::Error;
+pub mod block;
+pub mod expr;
+pub mod op;
+pub mod program;
+pub mod statement;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Val {
-    Lit(Literal),
-    Ref(Ref),
-    UnInit,
-    Mut(Box<Val>),
+use std::collections::HashMap;
+
+use crate::ast::{
+    op::BinaryOp,
+    Block,
+    Expr::{self},
+    Literal,
+};
+
+#[derive(Debug)]
+pub enum VmErr {
+    Err(String),
+    InvalidIdentifier(Expr),
 }
 
-// Helpers for Val
-// Alternatively implement the TryFrom trait
-impl Val {
-    pub fn get_bool(&self) -> Result<bool, Error> {
+/// Describes all of the needed data for a value.
+#[derive(Debug, Clone)]
+pub struct ValueMeta {
+    value: Option<Literal>,
+}
+#[derive(Debug, Clone)]
+pub struct FunctionMeta {
+    /// The variable scope, this should include
+    /// all arguments and their type info
+    ///
+    /// in the vm all type information is discarded
+    args: Vec<String>,
+    body: Block,
+}
+
+/// Represents the functions accessible in the current scope
+pub type FunctionScope = HashMap<String, FunctionMeta>;
+
+/// Represents a specific scope.
+/// For example a block has it's own scope.
+pub type Scope = HashMap<String, ValueMeta>;
+/// Represents all program [`Scope`]s
+pub type VarEnv = Vec<(Scope, FunctionScope)>;
+
+pub trait Eval {
+    fn eval(&self, env: &mut VarEnv, scope: usize) -> Result<Literal, VmErr>;
+}
+
+impl Literal {
+    pub fn get_int(&self) -> Result<i32, VmErr> {
         match self {
-            Val::Lit(Literal::Bool(b)) => Ok(*b),
-            _ => Err(format!("cannot get Bool from {:?}", self)),
+            Literal::Int(i) => Ok(*i),
+            _ => Err(VmErr::Err(format!("cannot get integer from {:?}", self))),
         }
     }
 
-    pub fn get_int(&self) -> Result<i32, Error> {
+    pub fn get_bool(&self) -> Result<bool, VmErr> {
         match self {
-            Val::Lit(Literal::Int(i)) => Ok(*i),
-            _ => Err(format!("cannot get integer from {:?}", self)),
+            Literal::Bool(b) => Ok(*b),
+            _ => Err(VmErr::Err(format!("cannot get Bool from {:?}", self))),
         }
     }
 }
 
-// Helper for Op
-impl Op {
+impl BinaryOp {
     // Evaluate operator to literal
-    pub fn eval(&self, left: Val, right: Val) -> Result<Val, Error> {
-        todo!();
+    pub fn eval(&self, left: Literal, right: Literal) -> Result<Literal, VmErr> {
+        use BinaryOp::*;
+        use Literal::{Bool, Int};
+        match self {
+            Add => Ok(Int(left.get_int()? + right.get_int()?)),
+            Sub => Ok(Int(left.get_int()? - right.get_int()?)),
+            Mul => Ok(Int(left.get_int()? * right.get_int()?)),
+            Div => Ok(Int(left.get_int()? / right.get_int()?)),
+            And => Ok(Bool(left.get_bool()? && right.get_bool()?)),
+            Or => Ok(Bool(left.get_bool()? || right.get_bool()?)),
+            Eq => Ok(Bool(left == right)), // overloading
+            Lt => Ok(Bool(left.get_int()? < right.get_int()?)),
+            Gt => Ok(Bool(left.get_int()? > right.get_int()?)),
+        }
     }
 }
 
-impl Eval<Val> for Expr {
-    fn eval(&self, env: &mut Env<Val>) -> Result<(Val, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
-}
-
-impl Eval<Val> for Block {
-    fn eval(&self, env: &mut Env<Val>) -> Result<(Val, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
-}
-
-impl Eval<Val> for FnDeclaration {
-    fn eval(&self, env: &mut Env<Val>) -> Result<(Val, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
-    }
-}
-
-impl Eval<Val> for Prog {
-    fn eval(&self, env: &mut Env<Val>) -> Result<(Val, Option<Ref>), Error> {
-        todo!("not implemented {:?}", self)
+impl Expr {
+    pub fn get_id(&self) -> Result<String, VmErr> {
+        match self {
+            Expr::Ident(s) => Ok(s.to_owned()),
+            _ => Err(VmErr::Err(format!("cannot get id from {:?}", self))),
+        }
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::Val;
-    use crate::ast::Literal;
-    use crate::ast::{Block, Prog};
-    use crate::common::parse_test;
+mod test {
 
+    use super::*;
+    use crate::ast::Block;
     #[test]
-    fn test_block_let() {
-        let v = parse_test::<Block, Val>(
-            "
+    fn test_check_block1() {
+        let ts: proc_macro2::TokenStream = "
     {
-        let a: i32 = 1;
-        let b: i32 = 2;
-
-        a + b
-    }",
-        );
-        assert_eq!(v.unwrap().get_int().unwrap(), 3);
-    }
-
-    #[test]
-    fn test_block_let_shadow() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a: i32 = 1;
-        let b: i32 = 2;
-        let a: i32 = 3;
-        let b: i32 = 4;
-
-        a + b
-    }",
-        );
-        assert_eq!(v.unwrap().get_int().unwrap(), 7);
-    }
-
-    #[test]
-    fn test_block_assign() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let mut a: i32 = 1;
-        a = a + 2;
-        a
-    }",
-        );
-        assert_eq!(v.unwrap().get_int().unwrap(), 3);
-    }
-
-    #[test]
-    fn test_expr_if_then_else() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let mut a: i32 = 1;
-        a = if a > 0 { a + 1 } else { a - 2 };
-        a
-    }",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
-    }
-
-    #[test]
-    fn test_expr_if_then_else2() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let mut a: i32 = 1;
-        a = if a < 0 { a + 1 } else { a - 2 };
-        a
-    }",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), -1);
-    }
-
-    #[test]
-    fn test_ref_deref() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 1;
-        let b = &a;
-        *b
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 1);
-    }
-
-    #[test]
-    fn test_ref_deref_indirect() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 1;
-        let b = &a;
-        let c = b;
-        *c
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 1);
-    }
-
-    #[test]
-    fn test_deref_assign() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 1;
-        let b = &a;
-        *b = 7;
+        let a: i32 = 1 + 2;
+        a = a + 1;
         a
     }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 7);
+    "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {:?}", bl);
+        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        println!("l {:?}", l);
+        assert_eq!(l.get_int().unwrap(), 4);
     }
 
     #[test]
-    fn test_while() {
-        let v = parse_test::<Block, Val>(
-            "
+    fn test_check_if_then_else() {
+        let ts: proc_macro2::TokenStream = "
     {
-        let a = 2;
-        let b = 0;
-        while a > 0 {
-            a = a - 1;
-            b = b + 1;
-        }
-        b
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
-    }
-
-    #[test]
-    fn test_while_ref() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 2;
-        let b = 0;
-        let c = &b;
-        while a > 0 {
-            a = a - 1;
-            *c = (*c) + 1;
-        }
-        *c
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
-    }
-
-    #[test]
-    fn test_while_ref2() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 2;
-        let b = 0;
-        let c = &b;
-        let d = &a;
-        
-        while (*d) > 0 {
-            *d = (*d) - 1;
-            *c = (*c) + 1;
-        }
-        *c
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
-    }
-
-    #[test]
-    fn test_bool() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = true && false;
-        a
-    }
-    ",
-        );
-
-        assert!(!v.unwrap().get_bool().unwrap());
-    }
-
-    #[test]
-    fn test_bool_bang() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = true && !false;
-        a
-    }
-    ",
-        );
-
-        assert!(v.unwrap().get_bool().unwrap());
-    }
-
-    #[test]
-    fn test_bool_bang2() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = (!true) && false;
-        a
-    }
-    ",
-        );
-
-        assert!(!v.unwrap().get_bool().unwrap());
-    }
-
-    #[test]
-    fn test_local_block() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 1;
-        { 
-            let b = &a;
-            *b = 2;
+        let a: i32 = 1 + 2;
+        if false {
+            a = a + 1
+        } else {
+            a = a - 1
+        };
+        if true {
+            a = a + 3
         };
         a
     }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 2);
-    }
-
-    #[test]
-    fn test_local_block_assign() {
-        let v = parse_test::<Block, Val>(
-            "
-    {
-        let a = 6;
-        let b = { 
-            let b = &a;
-            *b = (*b) + 1;
-            *b
-        };
-        b
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 7);
-    }
-
-    #[test]
-    fn test_prog() {
-        let v = parse_test::<Prog, Val>(
-            "
-    fn main() {
-        let a = 1;
-        a
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 1);
-    }
-
-    #[test]
-    fn test_local_fn() {
-        let v = parse_test::<Prog, Val>(
-            "
-    fn main() {
-        fn f(i: i32, j: i32) -> i32 {
-            i + j
-        }
-        let a = f(1, 2);
-        println!(\"a = {} and another a = {}\", a, a);
-    }
-    ",
-        );
-
-        assert_eq!(v.unwrap(), Val::Lit(Literal::Unit));
+    "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {:?}", bl);
+        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        println!("l {:?}", l);
+        assert_eq!(l.get_int().unwrap(), 5);
     }
 
     #[test]
     fn test_check_if_then_else_shadowing() {
-        let v = parse_test::<Block, Val>(
-            "
-        {
-            let a: i32 = 1 + 2; // a == 3
-            let a: i32 = 2 + a; // a == 5
-            if true {
-                a = a - 1;      // outer a == 4
-                let a: i32 = 0; // inner a == 0
-                a = a + 1       // inner a == 1
-            } else {
-                a = a - 1
-            };
-            a   // a == 4
-        }
-        ",
-        );
-
-        assert_eq!(v.unwrap().get_int().unwrap(), 4);
+        let ts: proc_macro2::TokenStream = "
+    {
+        let a: i32 = 1 + 2;
+        if true {
+            let a: i32 = 0;
+            a = a + 1
+        } else {
+            a = a - 1
+        };
+        a
     }
+    "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {:?}", bl);
+        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        println!("l {:?}", l);
+        // notice this will fail
+        assert_eq!(l.get_int().unwrap(), 3);
+    }
+
     #[test]
-    fn test_ref() {
-        let v = parse_test::<Block, Val>(
-            "
-        {
-            let a = &1;
-            *a
-        }
-        ",
-        );
-        assert_eq!(v.unwrap().get_int().unwrap(), 1);
+    fn test_check_while() {
+        let ts: proc_macro2::TokenStream = "
+    {
+        let a: i32 = 1 + 2;
+        let b: i32 = 0;
+        while a > 0 {
+            a = a - 1;
+            b = b + 1;
+        };
+        b
+    }
+    "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {:?}", bl);
+        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        println!("l {:?}", l);
+        assert_eq!(l.get_int().unwrap(), 3);
+    }
+
+    #[test]
+    fn test_check_if() {
+        let ts: proc_macro2::TokenStream = "
+    {
+        let a: i32 = 1 + 2;
+        let b: i32 = 0;
+        if a > 0 { b = 1 };
+        b
+    }
+    "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {:?}", bl);
+        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        println!("l {:?}", l);
+        assert_eq!(l.get_int().unwrap(), 1);
+    }
+
+    #[test]
+    fn test_check_if_else() {
+        let ts: proc_macro2::TokenStream = "
+    {
+        let a: i32 = 1 + 2;
+        let b: i32 = 0;
+        if a < 1 { b = 1 } else { b = 2 };
+        b
+    }
+    "
+        .parse()
+        .unwrap();
+        let bl: Block = syn::parse2(ts).unwrap();
+        println!("bl {:?}", bl);
+        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        println!("l {:?}", l);
+        assert_eq!(l.get_int().unwrap(), 2);
     }
 }

@@ -1,25 +1,25 @@
-use crate::ast::{Block, FnDeclaration, Mutable, Parameter, Parameters, Type};
+use crate::ast::{Arg, Block, Expr, Func, Type};
 use regex::Regex;
 // Implementation of intrinsics for the vm
 use crate::ast::Literal;
 pub type Intrinsic = fn(Vec<Literal>) -> Literal;
-pub fn vm_println() -> (FnDeclaration, Intrinsic) {
+pub fn vm_println() -> (Func, Intrinsic) {
     (
-        FnDeclaration {
-            id: "println!".to_string(),
-            parameters: Parameters(vec![
-                Parameter {
-                    mutable: Mutable(false),
-                    id: "str".to_string(),
+        Func {
+            id: Expr::Ident("println!".to_string()),
+            args: vec![
+                Arg {
+                    mutable: false,
+                    id: Expr::Ident("str".to_string()),
                     ty: Type::String,
                 },
-                Parameter {
-                    mutable: Mutable(false),
-                    id: "i".to_string(),
+                Arg {
+                    mutable: false,
+                    id: Expr::Ident("i".to_string()),
                     ty: Type::I32,
                 },
-            ]),
-            ty: None,
+            ],
+            ty: Type::Unit,
             body: Block {
                 statements: vec![],
                 semi: false,

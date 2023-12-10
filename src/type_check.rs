@@ -1,9 +1,13 @@
 pub mod block;
 pub mod expr;
+pub mod func;
+pub mod literal;
 pub mod statement;
 
 pub use block::*;
 pub use expr::*;
+pub use func::*;
+pub use literal::*;
 pub use statement::*;
 
 use crate::ast::Type;
@@ -12,8 +16,6 @@ use std::collections::HashMap;
 
 // So let's implement a type checker
 // Here we go!!!!
-
-type TypeErr = String;
 
 /// Describes all of the needed data for a value.
 #[derive(Debug, Clone)]
@@ -38,6 +40,7 @@ pub type FunctionScope = HashMap<String, FunctionMeta>;
 pub type Scope = HashMap<String, ValueMeta>;
 /// Represents all program [`Scope`]s
 pub type TypeEnv = Vec<(Scope, FunctionScope)>;
+type TypeErr = String;
 
 /// Denotes that a type is simply TypeCheckable.
 ///
