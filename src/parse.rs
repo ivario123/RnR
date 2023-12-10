@@ -3,6 +3,7 @@ pub mod expr;
 pub mod func;
 pub mod literal;
 pub mod op;
+pub mod program;
 pub mod statement;
 pub mod types;
 
@@ -11,6 +12,7 @@ pub use expr::*;
 pub use func::*;
 pub use literal::*;
 pub use op::*;
+pub use program::*;
 pub use statement::*;
 pub use types::*;
 

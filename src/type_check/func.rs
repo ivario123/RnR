@@ -48,7 +48,7 @@ impl TypeCheck for FuncCall {
 }
 
 impl TypeCheck for Func {
-    type ReturnType = Option<Type>;
+    type ReturnType = Type;
     fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
         // We have a function decleration, this should be inserted into the fn env and then
         // the 0th env and a new function env should be used to check wether or not the
@@ -111,6 +111,6 @@ impl TypeCheck for Func {
         if ret_ty != self.ty {
             return Err(format!("Expected {} but got {ret_ty}", self.ty));
         }
-        Ok(Some(ret_ty))
+        Ok(ret_ty)
     }
 }

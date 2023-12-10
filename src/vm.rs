@@ -1,5 +1,6 @@
 pub mod block;
 pub mod expr;
+pub mod func;
 pub mod op;
 pub mod program;
 pub mod statement;

@@ -1,9 +1,5 @@
-
-
 use super::{TypeEnv, TypeErr, ValueMeta};
-use crate::{
-    ast::{Expr, Statement, Type},
-};
+use crate::ast::{Expr, Statement, Type};
 
 impl super::TypeCheck for Statement {
     type ReturnType = Type;
@@ -125,7 +121,7 @@ impl super::TypeCheck for Statement {
                 Ok(ty) => Ok(Some(ty)),
                 Err(e) => Err(e),
             },
-            Statement::FnDecleration(func) => func.check(env, idx),
+            Statement::FnDecleration(func) => Ok(Some(func.check(env, idx)?)),
         };
         match (ret, idx) {
             (Ok(Some(value)), _) => Ok(value),
