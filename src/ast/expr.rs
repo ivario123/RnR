@@ -80,6 +80,7 @@ pub enum Expr {
     IndexMut(Box<Expr>, Box<Expr>),
     /// Runs the given function with the given arguments
     FuncCall(FuncCall),
+    Block(Block),
 }
 
 impl Expr {

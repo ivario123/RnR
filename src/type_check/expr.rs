@@ -1,5 +1,5 @@
-use super::{TypeEnv, TypeErr};
-use crate::ast::{Expr, Literal, Operation, Type};
+use super::{Operation, TypeEnv, TypeErr};
+use crate::ast::{Expr, Literal, Type};
 
 impl super::TypeCheck for Expr {
     type ReturnType = Type;
@@ -32,7 +32,7 @@ impl super::TypeCheck for Expr {
                         op, lhs, op, rhs
                     ));
                 }
-                Ok(op.return_type((lhs, rhs)))
+                Ok(op.return_type((lhs, rhs))?)
             }
 
             Expr::Par(e) => (*e).check(env, env.len() - 1),
@@ -61,7 +61,7 @@ impl super::TypeCheck for Expr {
             }
             Expr::UnOp(op, e) => {
                 let got = (*e).check(env, env.len() - 1)?;
-                let expected = op.return_type(got.clone());
+                let expected = op.return_type(got.clone())?;
 
                 match op.type_check(got.clone()) {
                     true => Ok(expected),
@@ -87,6 +87,7 @@ impl super::TypeCheck for Expr {
             Expr::Index(id, arr_index) => index(id, arr_index, false, env, idx),
             Expr::IndexMut(id, arr_index) => index(id, arr_index, true, env, idx),
             Expr::FuncCall(fncall) => fncall.check(env, idx),
+            Expr::Block(b) => b.check(env, env.len() - 1),
         };
         match (ret, idx) {
             (Ok(value), _) => Ok(value),

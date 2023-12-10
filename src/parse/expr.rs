@@ -10,6 +10,7 @@ use super::{
 impl Parse for Expr {
     // Use a custom parser for expressions
     fn parse(input: ParseStream) -> Result<Self> {
+        println!("Expr : {input:?}");
         let left = if input.peek(syn::token::Paren) {
             // we have a left (Expr), e.g., "(1 + 2)"
             let content;
@@ -45,7 +46,12 @@ impl Parse for Expr {
             // if true { 5 }
             let IfThenOptElse(c, t, e) = input.parse()?;
             Expr::IfThenElse(Box::new(c), t, e)
-        } else if input.peek(Token![-]) || input.peek(Token![!]) {
+        } else if input.peek(Token![-])
+            || input.peek(Token![!])
+            || input.peek(Token![&])
+            || input.peek(Token![*])
+        {
+            println!("unary op!!!");
             // We have a UnaryOp
             let op: UnaryOp = input.parse()?;
             let operand: Expr = input.parse()?;
@@ -83,12 +89,16 @@ impl Parse for Expr {
                 }
             };
             return Ok(Expr::Array(bl));
+        } else if input.peek(syn::token::Brace) {
+            let bl: Block = input.parse()?;
+            return Ok(Expr::Block(bl));
         } else {
             // else we require a left literal
+            println!("{input:?} should be a literal");
             input.parse::<crate::ast::Literal>()?.into()
         };
         // now check if right is an Op Expr
-        match input.parse::<BinaryOp>() {
+        match input.clone().parse::<BinaryOp>() {
             Ok(op) => {
                 let right: Expr = input.parse()?;
                 Ok(Expr::BinOp(op, Box::new(left), Box::new(right)))

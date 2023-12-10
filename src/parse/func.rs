@@ -27,6 +27,7 @@ impl Parse for Arg {
 }
 impl Parse for Func {
     fn parse(input: ParseStream) -> Result<Self> {
+        println!("{:?}", input);
         let _: Token![fn] = input.parse()?;
         let ident: syn::Ident = input.parse()?;
         let ident = Expr::Ident(ident.to_string());

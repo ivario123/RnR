@@ -1,8 +1,7 @@
-
-
 use syn::Token;
 
-use crate::ast::{Func};
+use crate::ast::Func;
+use crate::discard;
 
 use super::{Block, Expr, Parse, ParseStream, Result, Statement, Type};
 
@@ -40,6 +39,12 @@ fn parse_let(input: ParseStream) -> Result<Statement> {
 
 impl Parse for Statement {
     fn parse(input: ParseStream) -> Result<Statement> {
+        println!("{:?}", input);
+        println!(
+            "is add {} is eq {}",
+            input.peek2(Token![+]),
+            input.peek3(Token![=])
+        );
         if input.peek(syn::token::Let) {
             parse_let(input)
         } else if input.peek(syn::token::Fn) {
@@ -54,13 +59,37 @@ impl Parse for Statement {
             let block: Block = input.parse()?;
             return Ok(Statement::Block(block));
         } else {
-            let left = input.parse()?;
+            println!("Parsing some shit {input:?}");
+            let left = if input.peek(Token![*]) {
+                let _: Token![*] = input.parse()?;
+                let left: syn::Ident = input.parse()?;
+                Expr::UnOp(
+                    crate::ast::UnaryOp::Dereff,
+                    Box::new(Expr::Ident(left.to_string())),
+                )
+            } else {
+                let left: syn::Ident = input.parse()?;
+                Expr::Ident(left.to_string())
+            };
 
+            println!(
+                "is add {} is eq {}",
+                input.peek(Token![+]),
+                input.peek2(Token![=])
+            );
             if input.peek(syn::token::Eq) {
                 // a = 1 + 2
                 let _eq: syn::token::Eq = input.parse()?;
                 let right: Expr = input.parse()?;
 
+                Ok(Statement::Assign(left, right))
+            } else if input.peek2(Token![=]) && input.peek(Token![+]) {
+                // Add assign,
+                // RHS here is an expression we should rebuild this to a = a + b
+                println!("{:?}", input);
+                let _: Token![+=] = input.parse()?;
+                let rhs = input.parse()?;
+                let right = Expr::bin_op(crate::ast::BinaryOp::Add, left.clone(), rhs);
                 Ok(Statement::Assign(left, right))
             } else {
                 // 1 + 5

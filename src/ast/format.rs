@@ -137,6 +137,7 @@ impl InteralFormat for Expr {
             Expr::Index(id, idx) => format!("{id}[{idx}]"),
             Expr::IndexMut(id, idx) => format!("{id}[{idx}]"),
             Expr::FuncCall(func) => format!("{func}"),
+            Expr::Block(block) => block.fmt_internal(indent),
         }
     }
 }
@@ -230,6 +231,8 @@ impl fmt::Display for UnaryOp {
             UnaryOp::Not => "!",
             UnaryOp::Subtract => "-",
             UnaryOp::Borrow => "&",
+            UnaryOp::BorrowMut => "&mut",
+            UnaryOp::Dereff => "*",
         };
         write!(f, "{}", s)
     }
@@ -299,6 +302,7 @@ impl fmt::Display for Expr {
             Expr::Index(arr, idx) => format!("{arr}[{idx}]"),
             Expr::IndexMut(arr, idx) => format!("{arr}[{idx}]"),
             Expr::FuncCall(func) => format!("{func}"),
+            Expr::Block(block) => format!("{block}"),
         };
         write!(f, "{}", s)
     }

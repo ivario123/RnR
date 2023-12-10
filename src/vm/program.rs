@@ -1,5 +1,5 @@
 use super::Eval;
-use crate::ast::{program::*};
+use crate::ast::program::*;
 
 impl Eval for Prog {
     fn eval(

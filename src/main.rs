@@ -1,4 +1,5 @@
-use rnr::{ast::Prog, common::*, env::Env, type_check::Ty, vm::Val};
+use rnr::prelude::*;
+use rnr::{check, eval, parse};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -31,37 +32,34 @@ fn main() {
 
     // reads the file to a string and parses it
     let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => panic!("couldn't read {}: {}", opt.path.display(), why),
-        Ok(_) => {
-            print!("rnr input:\n{}", s);
-            let ts: proc_macro2::TokenStream = s.parse().unwrap();
-            print!("rnr parsing: ");
-            let parse: Result<Prog, _> = syn::parse2(ts);
-            match parse {
-                Err(err) => println!("error: {}", err),
-                Ok(prog) => {
-                    println!("\nrnr prog:\n{}", prog);
+    if let Err(why) = file.read_to_string(&mut s) {
+        panic!("couldn't read {}: {}", opt.path.display(), why)
+    }
 
-                    if opt.type_check {
-                        print!("rnr type checking: ");
-                        let mut env: Env<Ty> = Env::new();
-                        match prog.eval(&mut env) {
-                            Ok(_) => println!("passed"),
-                            Err(err) => println!("error: {}", err),
-                        }
-                    }
+    print!("rnr input:\n{}", s);
+    let ts: proc_macro2::TokenStream = s.parse().unwrap();
+    print!("rnr parsing: ");
+    let parse: Result<rnr::ast::Prog, _> = parse!(ts);
+    if parse.is_err() {
+        println!("error: {}", parse.err().unwrap());
+        return;
+    }
+    let prog = parse.unwrap();
+    println!("\nrnr prog:\n{}", prog);
 
-                    if opt.vm {
-                        println!("rnr evaluating");
-                        let mut env: Env<Val> = Env::new();
-                        match prog.eval(&mut env) {
-                            Ok(_) => println!("rnr evaluating done"),
-                            Err(err) => println!("error: {}", err),
-                        }
-                    }
-                }
-            }
+    if opt.type_check {
+        print!("rnr type checking: ");
+        match check!(prog) {
+            Ok(_) => println!("passed"),
+            Err(err) => println!("error: {}", err),
+        }
+    }
+
+    if opt.vm {
+        println!("rnr evaluating");
+        match eval!(prog) {
+            Ok(_) => println!("rnr evaluating done"),
+            Err(err) => println!("error: {}", err),
         }
     }
 }

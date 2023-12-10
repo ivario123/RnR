@@ -164,6 +164,7 @@ impl super::Eval for Expr {
                 env.get_mut(0).unwrap().0 = new_env.get(0).unwrap().0.clone();
                 Ok(ret)
             }
+            Expr::Block(b) => b.eval(env, env.len() - 1),
         };
         match (ret, scope) {
             (Ok(value), _) => Ok(value),

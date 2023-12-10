@@ -41,6 +41,8 @@ impl UnaryOp {
             UnaryOp::Not => 3,
             UnaryOp::Subtract => 3,
             UnaryOp::Borrow => 4,
+            UnaryOp::BorrowMut => 4,
+            UnaryOp::Dereff => 4,
         }
     }
 }

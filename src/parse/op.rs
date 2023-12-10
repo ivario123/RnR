@@ -48,7 +48,14 @@ impl Parse for UnaryOp {
             Ok(UnaryOp::Subtract)
         } else if input.peek(Token![&]) {
             let _: Token![&] = input.parse()?;
-            Ok(UnaryOp::Borrow)
+            if input.peek(Token![mut]) {
+                let _: Token![mut] = input.parse()?;
+                Ok(UnaryOp::BorrowMut)
+            } else {
+                Ok(UnaryOp::Borrow)
+            }
+        } else if input.peek(Token![*]) {
+            Ok(UnaryOp::Dereff)
         } else {
             // to explicitly create an error at the current position
             input.step(|cursor| Err(cursor.error("expected operator")))
