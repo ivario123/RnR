@@ -1,6 +1,6 @@
 use crate::ast::{program::*, Func};
 
-use syn::{parse::Parse, Token};
+use syn::parse::Parse;
 
 impl Parse for Prog {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -31,7 +31,7 @@ impl Parse for Prog {
         //
         // are valid in the rustc compiler, so our language should reflect this.
         //
-        statements.sort_by(|el1, el2| order(el1, el2));
+        statements.sort_by(|el1, el2| order(&**el1, &**el2));
         Ok(statements.into())
     }
 }

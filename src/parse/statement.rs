@@ -1,7 +1,7 @@
 use syn::Token;
 
 use crate::ast::{BinaryOp, Func};
-use crate::discard;
+
 use crate::parse::Peek;
 
 use super::{Block, Expr, Parse, ParseStream, Result, Statement, Type};

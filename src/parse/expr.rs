@@ -21,11 +21,11 @@ impl Parse for Expr {
             let _ = syn::parenthesized!(content in input);
             let e: Expr = content.parse()?;
             Expr::Par(Box::new(e))
-        } else if input.peek(syn::Ident) && input.peek2(syn::token::Paren) {
+        } else if input.peek(syn::Ident)
+            && (input.peek2(syn::token::Paren)
+                || (input.peek2(Token![!]) && input.peek3(syn::token::Paren)))
+        {
             // This is a function call. Now we simply parse the function call and return that.
-            let fncall: FuncCall = input.parse()?;
-            return Ok(Expr::FuncCall(fncall));
-        } else if input.peek(syn::Ident) && input.peek2(Token![!]) {
             let fncall: FuncCall = input.parse()?;
             return Ok(Expr::FuncCall(fncall));
         } else if input.peek(syn::Ident) && input.peek2(syn::token::Bracket) {

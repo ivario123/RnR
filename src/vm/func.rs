@@ -1,4 +1,4 @@
-use super::{VmErr};
+use super::VmErr;
 use crate::ast::{Expr, Literal};
 
 impl super::Eval for crate::ast::func::Func {
@@ -17,7 +17,7 @@ impl super::Eval for crate::ast::func::Func {
         let mut tmp_idx = env.len();
         while let Some(idx) = tmp_idx.checked_sub(1) {
             tmp_idx = idx;
-            if let Some(_) = env.get(idx).unwrap().1.get(&id) {
+            if env.get(idx).unwrap().1.get(&id).is_some() {
                 return Err(VmErr::Err(format!("Function {id} already defined.")));
             }
         }

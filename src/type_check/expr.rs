@@ -89,8 +89,8 @@ impl super::TypeCheck for Expr {
                 }
                 ret
             }
-            Expr::Index(id, arr_index) => index(id, arr_index, false, env, idx),
-            Expr::IndexMut(id, arr_index) => index(id, arr_index, true, env, idx),
+            Expr::Index(id, arr_index) => index(*id, *arr_index, false, env, idx),
+            Expr::IndexMut(id, arr_index) => index(*id, *arr_index, true, env, idx),
             Expr::FuncCall(fncall) => fncall.check(env, idx),
             Expr::Block(b) => b.check(env, env.len() - 1),
         };
@@ -102,13 +102,13 @@ impl super::TypeCheck for Expr {
     }
 }
 fn index(
-    id: Box<Expr>,
-    index: Box<Expr>,
+    id: Expr,
+    index: Expr,
     mutable: bool,
     env: &mut TypeEnv,
     idx: usize,
 ) -> Result<Type, TypeErr> {
-    let id = match *id {
+    let id = match id {
         Expr::Ident(id) => id,
         ty => return Err(format!("{ty} does not implement index")),
     };
@@ -123,15 +123,15 @@ fn index(
             match meta.ty.clone() {
                 Some(Type::Array(ty, size)) => {
                     // If the idx is a constant we can check it
-                    if let Expr::Lit(Literal::Int(idx)) = *index {
+                    if let Expr::Lit(Literal::Int(idx)) = index {
                         if idx as usize >= size {
                             return Err(format!("Cannot access element at index {idx} since array is of size {size}"));
                         }
                     }
                     Ok(*ty)
                 }
-                Some(ty) => return Err(format!("{ty} does not implement index")),
-                None => return Err("Type must be known at this point".to_string()),
+                Some(ty) => Err(format!("{ty} does not implement index")),
+                None => Err("Type must be known at this point".to_string()),
             }
         }
         _ => Err(format!("Usage of undecleared variable {id}")),

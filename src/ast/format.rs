@@ -23,7 +23,7 @@ macro_rules! fmt {
     };
 }
 impl InteralFormat for Prog {
-    fn fmt_internal(&self, indent: usize) -> String {
+    fn fmt_internal(&self, _indent: usize) -> String {
         self.statements
             .iter()
             .map(|el| format!("{el}"))
@@ -214,7 +214,7 @@ impl fmt::Display for Literal {
                     .join(",")
             )
             .to_owned(),
-            Literal::String(str) => format!("{str}"),
+            Literal::String(str) => str.to_string(),
         };
         write!(f, "{}", s)
     }
@@ -229,7 +229,7 @@ impl fmt::Display for Type {
             Type::Usize => "usize".to_owned(),
             Type::Array(ty, size) => format!("[{ty};{size}]"),
             Type::Ref(crate::ast::types::Ref(ty)) => format!("& {ty}"),
-            Type::String => format!("String"),
+            Type::String => "String".to_string(),
         };
         write!(f, "{}", s)
     }

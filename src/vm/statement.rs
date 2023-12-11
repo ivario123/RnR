@@ -10,7 +10,7 @@ impl Statement {
         let ret = match self.clone() {
             // The type is unused in the VM as the type checker should
             // already have validated that the type is correct.
-            Statement::Let(id, mutable, _t, e) => {
+            Statement::Let(id, _mutable, _t, e) => {
                 // let a: i32 = 5 + 2
                 // for now just accept an ident
                 let expr_type = match e {
@@ -41,7 +41,7 @@ impl Statement {
                     (_, idx) => e.eval(env, idx - 1),
                 }?;
 
-                let _ = match (id.clone().assign(env, len - 1, rhs.clone()), scope) {
+                match (id.clone().assign(env, len - 1, rhs.clone()), scope) {
                     // If we can't eval in this scope go one lower
                     (Ok(_), _) => Ok(()),
                     (Err(e), 0) => Err(e),

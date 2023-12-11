@@ -46,11 +46,6 @@ impl TypeCheck for FuncCall {
             e => return Err(format!("Cannot treat {e} as a function identifier.")),
         };
 
-        let this_fnenv: &super::FunctionScope = match env.get(idx) {
-            Some(envs) => &envs.1,
-            None => return Err("Invalid scoping".to_owned()),
-        };
-
         let mut index = env.len() - 1;
         let mut fndec = None;
         while let Some(scope) = env.get(index) {
@@ -73,7 +68,8 @@ impl TypeCheck for FuncCall {
                 args.len()
             ));
         }
-        let mut args: Vec<(usize, (&(Type, bool), &Type))> =
+        type ArgTuple<'a> = &'a (Type, bool);
+        let mut args: Vec<(usize, (ArgTuple, &Type))> =
             fndec.args.iter().zip(args.iter()).enumerate().collect();
 
         while let Some((idx, ((expected_ty, _expected_mutable), got))) = args.pop() {

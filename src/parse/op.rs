@@ -4,7 +4,7 @@ impl super::Peek for BinaryOp {
     fn peek<const DIST: usize>(input: ParseStream) -> bool {
         use syn::token;
         // check if next token is `+`
-        if Self::peek_buffer(input, token::Plus, DIST)
+        Self::peek_buffer(input, token::Plus, DIST)
             || Self::peek_buffer(input, token::Minus, DIST)
             || Self::peek_buffer(input, token::Star, DIST)
             || Self::peek_buffer(input, token::Slash, DIST)
@@ -13,11 +13,6 @@ impl super::Peek for BinaryOp {
             || Self::peek_buffer(input, Token![==], DIST)
             || Self::peek_buffer(input, Token![>], DIST)
             || Self::peek_buffer(input, Token![<], DIST)
-        {
-            true
-        } else {
-            false
-        }
     }
 }
 impl Parse for BinaryOp {

@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use super::{op::Operation, Eval, ValueMeta, VarEnv, VmErr};
-use crate::ast::{Expr, FuncCall, Literal};
+use crate::ast::{Expr, Literal};
 
 impl super::Eval for Expr {
     //.eval_expr
@@ -163,7 +163,7 @@ impl super::Eval for Expr {
                 }
 
                 // Now we need to check if the call is intrinsic
-                let ret = match func_name == "println!".to_owned() {
+                let ret = match func_name == *"println!" {
                     true => {
                         let (_f, body) = crate::intrinsics::vm_println();
                         body(values)

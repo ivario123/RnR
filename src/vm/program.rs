@@ -14,7 +14,7 @@ impl Eval for Prog {
     ) -> Result<crate::ast::Literal, super::VmErr> {
         let mut global_scope = (crate::vm::Scope::new(), crate::vm::FunctionScope::new());
         // Introduce compile builtins
-        let (f, body) = vm_println();
+        let (f, _body) = vm_println();
         match &f.id {
             crate::ast::Expr::Ident(id) => global_scope.1.insert(id.clone(), f.into()),
             e => return Err(VmErr::Err(format!("Malformed compiler built in {e}"))),
@@ -28,7 +28,7 @@ impl Eval for Prog {
         }
         Expr::FuncCall(FuncCall {
             id: Box::new(Expr::Ident("main".to_owned())),
-            args: Box::new(vec![]),
+            args: Box::default(),
         })
         .eval(env, scope)?;
         Ok(Literal::Unit)

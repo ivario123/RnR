@@ -24,12 +24,12 @@ use syn::{
 };
 
 trait Peek {
-    fn peek_buffer<T: syn::parse::Peek>(input: ParseStream, token: T, DIST: usize) -> bool {
-        match DIST {
+    fn peek_buffer<T: syn::parse::Peek>(input: ParseStream, token: T, dist: usize) -> bool {
+        match dist {
             1 => input.peek(token),
             2 => input.peek2(token),
             3 => input.peek3(token),
-            _ => panic!("Cannot peek {DIST} tokens ahead"),
+            _ => panic!("Cannot peek {dist} tokens ahead"),
         }
     }
     fn peek<const DIST: usize>(input: ParseStream) -> bool;

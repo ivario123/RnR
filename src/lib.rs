@@ -1,4 +1,6 @@
 #![deny(clippy::all)]
+#![deny(warnings)]
+
 // Once you have back-ported your code
 // you should remove the above attributes.
 // Strive to keep your code free of warnings.

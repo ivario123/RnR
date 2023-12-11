@@ -8,7 +8,7 @@ impl Parse for Literal {
         Ok(match l {
             syn::Lit::Int(l) => Literal::Int(l.base10_parse().unwrap()),
             syn::Lit::Bool(b) => Literal::Bool(b.value),
-            syn::Lit::Str(s) => Literal::String(format!("{}", s.token().to_string())),
+            syn::Lit::Str(s) => Literal::String(format!("{}", s.token())),
             // for now only Int and Bool are covered
             _ => unimplemented!(),
         })

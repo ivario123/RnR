@@ -3,7 +3,7 @@ use crate::ast::{Expr, Literal, Type};
 
 impl TypeCheck for Literal {
     type ReturnType = Type;
-    fn check(&self, env: &mut super::TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut super::TypeEnv, _idx: usize) -> Result<Self::ReturnType, TypeErr> {
         match self {
             Literal::Unit => Ok(Type::Unit),
             // Default type for Literal ints is i32 this can be coerced in expressions.

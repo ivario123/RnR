@@ -13,8 +13,8 @@ pub trait TopLevel:
 }
 /// Used to sort the program in to usable chunks
 pub(crate) fn order<T1: TopLevel + ?Sized, T2: TopLevel + ?Sized>(
-    el1: &Box<T1>,
-    el2: &Box<T2>,
+    el1: &T1,
+    el2: &T2,
 ) -> std::cmp::Ordering {
     match (
         el1.prio() >= el2.prio(),
