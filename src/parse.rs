@@ -23,6 +23,18 @@ use syn::{
     Result, Token,
 };
 
+trait Peek {
+    fn peek_buffer<T: syn::parse::Peek>(input: ParseStream, token: T, DIST: usize) -> bool {
+        match DIST {
+            1 => input.peek(token),
+            2 => input.peek2(token),
+            3 => input.peek3(token),
+            _ => panic!("Cannot peek {DIST} tokens ahead"),
+        }
+    }
+    fn peek<const DIST: usize>(input: ParseStream) -> bool;
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

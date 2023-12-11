@@ -40,16 +40,16 @@ impl InteralFormat for Statement {
                     "let {}{}{}{}",
                     match mutable {
                         true => "mut ",
-                        _ => " ",
+                        _ => "",
                     }
                     .to_owned(),
                     lhs,
                     match ty {
                         Some(ty) => format!(" : {ty}"),
-                        _ => " ".to_owned(),
+                        _ => "".to_owned(),
                     },
                     match rhs {
-                        Some(rhs) => format!(" = {}", rhs),
+                        Some(rhs) => format!(" = {}", rhs.fmt_internal(indent + 1)),
 
                         _ => "".to_owned(),
                     }
@@ -111,7 +111,7 @@ impl InteralFormat for Expr {
             Expr::Ident(a) => a.to_owned(),
             Expr::Lit(l) => format!("{}", l),
             Expr::BinOp(op, l, r) => format!("{} {} {}", l, op, r.fmt_internal(indent)),
-            Expr::UnOp(op, operand) => format!("{} {}", op, operand.fmt_internal(indent)),
+            Expr::UnOp(op, operand) => format!("{}{}", op, operand.fmt_internal(indent)),
             Expr::Par(e) => format!("({})", e.fmt_internal(indent)),
             Expr::IfThenElse(req, block, base_case) => match base_case {
                 Some(other_block) => {
@@ -157,7 +157,7 @@ impl fmt::Display for BinaryOp {
         write!(f, "{}", s)
     }
 }
-fmt!(Prog, Block, Func,);
+fmt!(Prog, Block, Func, Expr,);
 
 impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -229,9 +229,9 @@ impl fmt::Display for UnaryOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             UnaryOp::Not => "!",
-            UnaryOp::Subtract => "-",
+            UnaryOp::Subtract => "- ",
             UnaryOp::Borrow => "&",
-            UnaryOp::BorrowMut => "&mut",
+            UnaryOp::BorrowMut => "&mut ",
             UnaryOp::Dereff => "*",
         };
         write!(f, "{}", s)
@@ -252,9 +252,7 @@ impl fmt::Display for Literal {
                     .join(",")
             )
             .to_owned(),
-            Literal::String(str) => {
-                format!("\"{str}\"")
-            }
+            Literal::String(str) => format!("{str}"),
         };
         write!(f, "{}", s)
     }
@@ -274,40 +272,6 @@ impl fmt::Display for Type {
         write!(f, "{}", s)
     }
 }
-
-impl fmt::Display for Expr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Expr::Ident(a) => a.to_owned(),
-            Expr::Lit(l) => format!("{}", l),
-            Expr::BinOp(op, l, r) => format!("{} {} {}", l, op, r),
-            Expr::UnOp(op, operand) => format!("{} {}", op, operand),
-            Expr::Par(e) => format!("({})", e),
-            Expr::IfThenElse(req, block, base_case) => match base_case {
-                Some(other_block) => {
-                    format!("if {} {} else {}", req, block, other_block)
-                }
-                _ => {
-                    format!("if {} {}", req, block)
-                }
-            },
-            Expr::Array(elements) => {
-                let strs = elements
-                    .iter()
-                    .map(|el| format!("{}", el))
-                    .collect::<Vec<String>>()
-                    .join(",");
-                format!("[{strs}]")
-            }
-            Expr::Index(arr, idx) => format!("{arr}[{idx}]"),
-            Expr::IndexMut(arr, idx) => format!("{arr}[{idx}]"),
-            Expr::FuncCall(func) => format!("{func}"),
-            Expr::Block(block) => format!("{block}"),
-        };
-        write!(f, "{}", s)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;

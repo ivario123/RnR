@@ -1,7 +1,8 @@
 use syn::Token;
 
-use crate::ast::Func;
+use crate::ast::{BinaryOp, Func};
 use crate::discard;
+use crate::parse::Peek;
 
 use super::{Block, Expr, Parse, ParseStream, Result, Statement, Type};
 
@@ -58,6 +59,23 @@ impl Parse for Statement {
         } else if input.peek(syn::token::Brace) {
             let block: Block = input.parse()?;
             return Ok(Statement::Block(block));
+        }
+        // This sollution has a few quirks, the main one is that
+        // it allows for syntax like
+        // a === b;
+        // Which would result in
+        // a = a == b;
+        // This is not valid rust syntax but a workaround would be much uglier
+        else if BinaryOp::peek::<2>(input) && input.peek3(Token![=]) {
+            // We have to check if it is add assign or such first.
+            let id: syn::Ident = input.parse()?;
+            let id = Expr::Ident(id.to_string());
+            let op: BinaryOp = input.parse()?;
+            let _: Token![=] = input.parse()?;
+            let rhs = input.parse()?;
+            let rhs = Expr::BinOp(op, Box::new(id.clone()), Box::new(rhs));
+
+            return Ok(Statement::Assign(id, rhs));
         } else {
             println!("Parsing some shit {input:?}");
             let left = if input.peek(Token![*]) {
@@ -68,10 +86,10 @@ impl Parse for Statement {
                     Box::new(Expr::Ident(left.to_string())),
                 )
             } else {
-                let left: syn::Ident = input.parse()?;
-                Expr::Ident(left.to_string())
+                let left: Expr = input.parse()?;
+                left
             };
-
+            println!("{left}");
             println!(
                 "is add {} is eq {}",
                 input.peek(Token![+]),

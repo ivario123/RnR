@@ -26,8 +26,10 @@ impl Parse for Arg {
     }
 }
 impl Parse for Func {
+    /// Parses the input stream in to a [function definition](Func)
+    ///
     fn parse(input: ParseStream) -> Result<Self> {
-        println!("{:?}", input);
+        println!("parsing function definition {:?}", input);
         let _: Token![fn] = input.parse()?;
         let ident: syn::Ident = input.parse()?;
         let ident = Expr::Ident(ident.to_string());
@@ -50,9 +52,28 @@ impl Parse for Func {
     }
 }
 impl Parse for FuncCall {
+    /// Parses the input stream in to a [function call](FuncCall)
+    ///
+    /// ## Deviations from rust syntax
+    ///
+    /// This parser deviates from the rust parser in that it treats macro invocations as a function
+    /// call.
     fn parse(input: ParseStream) -> Result<Self> {
         let ident: syn::Ident = input.parse()?;
-        let ident = Expr::Ident(ident.to_string());
+        let mut inner = ident.to_string();
+
+        //
+        //  Deviation from rust syntax
+        //  discard the ! as we have not implemented macro invocations
+        //
+        //
+        if input.peek(Token![!]) {
+            let _: Token![!] = input.parse()?;
+            inner.push('!');
+        }
+
+        let ident = Expr::Ident(inner);
+
         let content;
         syn::parenthesized!(content in input);
         let args = content.parse_terminated(Expr::parse, syn::token::Comma)?;

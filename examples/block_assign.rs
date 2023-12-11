@@ -5,5 +5,5 @@ fn main() {
         *b += 1;
         *b
     };
-    println!("b {}", b)
+    println!("b {}", b);
 }

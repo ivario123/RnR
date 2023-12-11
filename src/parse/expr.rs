@@ -8,7 +8,12 @@ use super::{
 
 // Render a "right associative" AST
 impl Parse for Expr {
-    // Use a custom parser for expressions
+    /// Parses the input stream in to an [expression](Expr)
+    ///
+    /// ## Deviations from rust syntax
+    ///
+    /// This parser deviates from the rust syntax in that it treats macro invocations
+    /// as function calls simply discarding the ! at the end of function identifiers
     fn parse(input: ParseStream) -> Result<Self> {
         println!("Expr : {input:?}");
         let left = if input.peek(syn::token::Paren) {
@@ -19,6 +24,9 @@ impl Parse for Expr {
             Expr::Par(Box::new(e))
         } else if input.peek(syn::Ident) && input.peek2(syn::token::Paren) {
             // This is a function call. Now we simply parse the function call and return that.
+            let fncall: FuncCall = input.parse()?;
+            return Ok(Expr::FuncCall(fncall));
+        } else if input.peek(syn::Ident) && input.peek2(Token![!]) {
             let fncall: FuncCall = input.parse()?;
             return Ok(Expr::FuncCall(fncall));
         } else if input.peek(syn::Ident) && input.peek2(syn::token::Bracket) {
