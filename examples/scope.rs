@@ -13,3 +13,4 @@ fn main() {
         a // a == 4
     }
 }
+fn other_tmp() {}

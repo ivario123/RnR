@@ -11,7 +11,7 @@ use crate::ast::{
     op::BinaryOp,
     Block,
     Expr::{self},
-    Literal,
+    Func, Literal,
 };
 
 #[derive(Debug)]
@@ -42,7 +42,21 @@ pub struct FunctionMeta {
     args: Vec<String>,
     body: Block,
 }
-
+impl From<Func> for FunctionMeta {
+    fn from(value: Func) -> Self {
+        Self {
+            args: value
+                .args
+                .iter()
+                .map(|el| match &el.id {
+                    Expr::Ident(i) => i.clone(),
+                    e => panic!("Cannot treat {e} as an expression"),
+                })
+                .collect(),
+            body: value.body,
+        }
+    }
+}
 /// Represents the functions accessible in the current scope
 pub type FunctionScope = HashMap<String, FunctionMeta>;
 

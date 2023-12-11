@@ -9,16 +9,24 @@ pub trait Prio {
 pub trait TopLevel:
     crate::vm::Eval + crate::type_check::TypeCheck<ReturnType = crate::ast::Type> + Display + Prio
 {
+    fn is_main(&self) -> bool;
 }
-
+/// Used to sort the program in to usable chunks
 pub(crate) fn order<T1: TopLevel + ?Sized, T2: TopLevel + ?Sized>(
     el1: &Box<T1>,
     el2: &Box<T2>,
 ) -> std::cmp::Ordering {
-    match (el1.prio() >= el2.prio(), el1.prio() == el2.prio()) {
-        (true, true) => std::cmp::Ordering::Equal,
-        (true, false) => std::cmp::Ordering::Greater,
-        (false, _) => std::cmp::Ordering::Less,
+    match (
+        el1.prio() >= el2.prio(),
+        el1.prio() == el2.prio(),
+        el1.is_main(),
+        el2.is_main(),
+    ) {
+        (_, _, true, _) => std::cmp::Ordering::Greater,
+        (_, _, _, true) => std::cmp::Ordering::Less,
+        (true, true, _, _) => std::cmp::Ordering::Equal,
+        (true, false, _, _) => std::cmp::Ordering::Greater,
+        (false, _, _, _) => std::cmp::Ordering::Less,
     }
 }
 
@@ -30,7 +38,14 @@ impl Prio for super::Func {
         2
     }
 }
-impl TopLevel for super::Func {}
+impl TopLevel for super::Func {
+    fn is_main(&self) -> bool {
+        match &self.id {
+            crate::ast::Expr::Ident(s) => s == &"main".to_string(),
+            _ => false,
+        }
+    }
+}
 
 impl std::fmt::Debug for dyn TopLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

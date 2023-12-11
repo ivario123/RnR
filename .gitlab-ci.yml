@@ -29,7 +29,16 @@ example_tests:
   stage: test
   image: rust:latest
   script:
-    - cargo test --examples -- --show-output
+        - cargo build --release
+        - set e
+        - cd examples
+        - for file in $(find -name "*.rs"); do; 
+            echo "Running example $file"; 
+            ../target/release/rnr "$file" --type-check --vm;
+          done;
+
+
+
 
 clippy:
   only:

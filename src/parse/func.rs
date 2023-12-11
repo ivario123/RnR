@@ -29,7 +29,6 @@ impl Parse for Func {
     /// Parses the input stream in to a [function definition](Func)
     ///
     fn parse(input: ParseStream) -> Result<Self> {
-        println!("parsing function definition {:?}", input);
         let _: Token![fn] = input.parse()?;
         let ident: syn::Ident = input.parse()?;
         let ident = Expr::Ident(ident.to_string());

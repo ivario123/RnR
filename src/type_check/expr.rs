@@ -12,15 +12,20 @@ impl super::TypeCheck for Expr {
             return Err("No scope decleared".to_owned());
         }
         let ret = match self.clone() {
-            Expr::Ident(id) => match (env.get(idx).unwrap().0.get(&id), idx) {
-                (Some(t), _) => match &t.ty {
-                    Some(t) => Ok(t.clone()),
-                    _ => Err(format!("Type of variable {id} must be known at this point")),
-                },
-                // Look for identifier in earlier scopes
-                (_, 0) => Err("variable not found".to_string()),
-                (_, _) => return self.check(env, idx - 1),
-            },
+            Expr::Ident(id) => {
+                let res = env.get(idx);
+                let res = res.unwrap().0.get(&id);
+
+                match (res, idx) {
+                    (Some(t), _) => match &t.ty {
+                        Some(t) => Ok(t.clone()),
+                        _ => Err(format!("Type of variable {id} must be known at this point")),
+                    },
+                    // Look for identifier in earlier scopes
+                    (_, 0) => Err("variable not found".to_string()),
+                    (_, _) => return self.check(env, idx - 1),
+                }
+            }
             Expr::Lit(l) => l.check(env, env.len() - 1),
             Expr::BinOp(op, l, r) => {
                 let lhs = (*l).check(env, env.len() - 1)?;

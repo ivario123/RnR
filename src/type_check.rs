@@ -14,7 +14,7 @@ pub use op::*;
 pub use program::*;
 pub use statement::*;
 
-use crate::ast::Type;
+use crate::ast::{Func, Type};
 
 use std::collections::HashMap;
 
@@ -53,6 +53,18 @@ type TypeErr = String;
 pub trait TypeCheck {
     type ReturnType;
     fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr>;
+}
+
+impl From<Func> for FunctionMeta {
+    fn from(value: Func) -> Self {
+        let ty = value.ty;
+        let args = value
+            .args
+            .iter()
+            .map(|arg| (arg.ty.clone(), arg.mutable))
+            .collect();
+        Self { ty, args }
+    }
 }
 
 #[cfg(test)]

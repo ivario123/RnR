@@ -1,6 +1,6 @@
 //! Enumerates all of the possible types in this subset of the rust language.
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     I32,
     Bool,
@@ -11,7 +11,7 @@ pub enum Type {
     String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ref(pub Box<Type>);
 
 impl From<Type> for Ref {

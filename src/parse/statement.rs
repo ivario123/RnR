@@ -40,12 +40,6 @@ fn parse_let(input: ParseStream) -> Result<Statement> {
 
 impl Parse for Statement {
     fn parse(input: ParseStream) -> Result<Statement> {
-        println!("{:?}", input);
-        println!(
-            "is add {} is eq {}",
-            input.peek2(Token![+]),
-            input.peek3(Token![=])
-        );
         if input.peek(syn::token::Let) {
             parse_let(input)
         } else if input.peek(syn::token::Fn) {
@@ -77,7 +71,6 @@ impl Parse for Statement {
 
             return Ok(Statement::Assign(id, rhs));
         } else {
-            println!("Parsing some shit {input:?}");
             let left = if input.peek(Token![*]) {
                 let _: Token![*] = input.parse()?;
                 let left: syn::Ident = input.parse()?;
@@ -89,12 +82,6 @@ impl Parse for Statement {
                 let left: Expr = input.parse()?;
                 left
             };
-            println!("{left}");
-            println!(
-                "is add {} is eq {}",
-                input.peek(Token![+]),
-                input.peek2(Token![=])
-            );
             if input.peek(syn::token::Eq) {
                 // a = 1 + 2
                 let _eq: syn::token::Eq = input.parse()?;
@@ -104,7 +91,6 @@ impl Parse for Statement {
             } else if input.peek2(Token![=]) && input.peek(Token![+]) {
                 // Add assign,
                 // RHS here is an expression we should rebuild this to a = a + b
-                println!("{:?}", input);
                 let _: Token![+=] = input.parse()?;
                 let rhs = input.parse()?;
                 let right = Expr::bin_op(crate::ast::BinaryOp::Add, left.clone(), rhs);

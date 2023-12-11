@@ -6,7 +6,6 @@ impl Parse for Block {
     fn parse(input: ParseStream) -> Result<Block> {
         let content;
         let _ = syn::braced!(content in input);
-        println!("content : {:?}", content);
         let bl: Punctuated<Statement, Token![;]> =
             content.parse_terminated(Statement::parse, Token![;])?;
         // We need to retrieve the semi before we collect into a vector

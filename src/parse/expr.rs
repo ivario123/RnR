@@ -15,7 +15,6 @@ impl Parse for Expr {
     /// This parser deviates from the rust syntax in that it treats macro invocations
     /// as function calls simply discarding the ! at the end of function identifiers
     fn parse(input: ParseStream) -> Result<Self> {
-        println!("Expr : {input:?}");
         let left = if input.peek(syn::token::Paren) {
             // we have a left (Expr), e.g., "(1 + 2)"
             let content;
@@ -59,7 +58,6 @@ impl Parse for Expr {
             || input.peek(Token![&])
             || input.peek(Token![*])
         {
-            println!("unary op!!!");
             // We have a UnaryOp
             let op: UnaryOp = input.parse()?;
             let operand: Expr = input.parse()?;
@@ -102,7 +100,6 @@ impl Parse for Expr {
             return Ok(Expr::Block(bl));
         } else {
             // else we require a left literal
-            println!("{input:?} should be a literal");
             input.parse::<crate::ast::Literal>()?.into()
         };
         // now check if right is an Op Expr

@@ -3,6 +3,7 @@ use regex::Regex;
 // Implementation of intrinsics for the vm
 use crate::ast::Literal;
 pub type Intrinsic = fn(Vec<Literal>) -> Literal;
+
 pub fn vm_println() -> (Func, Intrinsic) {
     (
         Func {

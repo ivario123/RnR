@@ -1,6 +1,6 @@
 use super::{block::Block, expr::Expr, types::Type};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
     Let(Expr, bool, Option<Type>, Option<Expr>),
     Assign(Expr, Expr),

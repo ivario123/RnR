@@ -64,7 +64,7 @@ impl InteralFormat for Statement {
                 format!("{lhs} = {}", rhs.fmt_internal(indent))
             }
             Statement::Block(b) => b.fmt_internal(indent),
-            Statement::FnDecleration(func) => func.fmt_internal(indent),
+            Statement::FnDecleration(func) => func.fmt_internal(indent + 1),
         };
         format!("{}{};", " ".repeat(indent), str)
     }
@@ -116,7 +116,7 @@ impl InteralFormat for Expr {
             Expr::IfThenElse(req, block, base_case) => match base_case {
                 Some(other_block) => {
                     format!(
-                        "if {} {} else{}",
+                        "if {} {} else {}",
                         req,
                         block.fmt_internal(indent + 1),
                         other_block.fmt_internal(indent + 1)
@@ -157,46 +157,8 @@ impl fmt::Display for BinaryOp {
         write!(f, "{}", s)
     }
 }
-fmt!(Prog, Block, Func, Expr,);
+fmt!(Prog, Block, Func, Expr, Statement,);
 
-impl fmt::Display for Statement {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let str = match self {
-            Statement::Let(lhs, mutable, ty, rhs) => {
-                format!(
-                    "let {}{}{}{}",
-                    match mutable {
-                        true => "mut ",
-                        _ => " ",
-                    }
-                    .to_owned(),
-                    lhs,
-                    match ty {
-                        Some(ty) => format!(" : {ty}"),
-                        _ => " ".to_owned(),
-                    },
-                    match rhs {
-                        Some(rhs) => format!(" = {}", rhs),
-
-                        _ => ";".to_owned(),
-                    }
-                )
-            }
-            Statement::Expr(expr) => format!("{expr}"),
-            Statement::While(condition, block) => {
-                format!("while {condition} {block}")
-            }
-            Statement::Assign(lhs, rhs) => {
-                format!("{lhs} = {rhs}")
-            }
-            Statement::Block(b) => format!("{b}"),
-            Statement::FnDecleration(func) => {
-                format!("{func}")
-            }
-        };
-        write!(f, "{};", str)
-    }
-}
 impl fmt::Display for FuncCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

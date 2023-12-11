@@ -4,7 +4,6 @@ impl Parse for Literal {
     fn parse(input: ParseStream) -> Result<Self> {
         // Use the "built in" syn parser for literals
         let l: syn::Lit = input.parse()?;
-        println!("{l:?}");
 
         Ok(match l {
             syn::Lit::Int(l) => Literal::Int(l.base10_parse().unwrap()),

@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use super::{op::Operation, Eval, ValueMeta, VarEnv, VmErr};
-use crate::ast::{Expr, Literal};
+use crate::ast::{Expr, FuncCall, Literal};
 
 impl super::Eval for Expr {
     //.eval_expr
@@ -122,6 +122,7 @@ impl super::Eval for Expr {
                     Expr::Ident(id) => Ok(id),
                     exp => Err(VmErr::Err(format!("Cannot treat {exp} as a function id"))),
                 }?;
+                let func_name = id.clone();
 
                 let fndec = match (curr_scope.1.get(&id), scope) {
                     (Some(fndec), _) => Ok(fndec),
@@ -129,8 +130,11 @@ impl super::Eval for Expr {
                     (_, _) => return self.eval(env, scope - 1),
                 }?;
                 let mut args = vec![];
+                let mut values = vec![];
                 for (arg, value) in fndec.args.iter().zip(call.args.iter()) {
-                    args.push((arg.clone(), value.eval(env, last_scope)?));
+                    let intermediate = value.eval(env, last_scope)?;
+                    values.push(intermediate.clone());
+                    args.push((arg.clone(), intermediate));
                 }
 
                 // Give function scope access to global scope and all of the accessible functions
@@ -157,10 +161,16 @@ impl super::Eval for Expr {
                         .0
                         .insert(id.clone(), ValueMeta { value: Some(val) });
                 }
-                //fndec.rec_count += 1;
-                let ret = fndec.body.eval(&mut new_env, last_scope)?;
-                //fndec.rec_count -= 1;
-                // Allow mutable access to global scope
+
+                // Now we need to check if the call is intrinsic
+                let ret = match func_name == "println!".to_owned() {
+                    true => {
+                        let (_f, body) = crate::intrinsics::vm_println();
+                        body(values)
+                    }
+                    false => fndec.body.eval(&mut new_env, last_scope)?,
+                }; //fndec.rec_count -= 1;
+                   // Allow mutable access to global scope
                 env.get_mut(0).unwrap().0 = new_env.get(0).unwrap().0.clone();
                 Ok(ret)
             }
