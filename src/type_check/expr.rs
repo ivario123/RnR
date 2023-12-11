@@ -11,19 +11,28 @@ impl super::TypeCheck for Expr {
         if env.len() < idx || env.len() == 0 {
             return Err("No scope decleared".to_owned());
         }
+        println!("Evaluating : {self}");
         let ret = match self.clone() {
             Expr::Ident(id) => {
                 let res = env.get(idx);
-                let res = res.unwrap().0.get(&id);
+                let scope = match res {
+                    Some(scope) => scope,
+                    None => return Err("Invalid scope usage".to_string()),
+                };
+
+                let res = scope.0.get(&id);
 
                 match (res, idx) {
-                    (Some(t), _) => match &t.ty {
-                        Some(t) => Ok(t.clone()),
-                        _ => Err(format!("Type of variable {id} must be known at this point")),
-                    },
+                    (Some(t), _) => {
+                        println!("Found {id}");
+                        match &t.ty {
+                            Some(t) => Ok(t.clone()),
+                            _ => Err(format!("Type of variable {id} must be known at this point")),
+                        }
+                    }
                     // Look for identifier in earlier scopes
-                    (_, 0) => Err("variable not found".to_string()),
-                    (_, _) => return self.check(env, idx - 1),
+                    (_, 0) => Err(format!("variable {id} not found")),
+                    (_, _) => self.check(env, idx - 1),
                 }
             }
             Expr::Lit(l) => l.check(env, env.len() - 1),
@@ -91,7 +100,7 @@ impl super::TypeCheck for Expr {
             }
             Expr::Index(id, arr_index) => index(*id, *arr_index, false, env, idx),
             Expr::IndexMut(id, arr_index) => index(*id, *arr_index, true, env, idx),
-            Expr::FuncCall(fncall) => fncall.check(env, idx),
+            Expr::FuncCall(fncall) => fncall.check(env, env.len() - 1),
             Expr::Block(b) => b.check(env, env.len() - 1),
         };
         match (ret, idx) {

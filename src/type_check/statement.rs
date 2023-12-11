@@ -7,6 +7,7 @@ impl super::TypeCheck for Statement {
         if env.len() < idx {
             return Err("Trying to read from undecleared scope".to_owned());
         }
+        println!("Evaluating {self}");
         let last_scope = match env.len() {
             0 => 0,
             l => l - 1,
@@ -111,17 +112,17 @@ impl super::TypeCheck for Statement {
                         expr_type
                     ))
                 } else {
-                    match b.check(env, idx) {
+                    match b.check(env, last_scope) {
                         Ok(ty) => Ok(Some(ty)),
                         Err(e) => Err(e),
                     }
                 }
             }
-            Statement::Block(b) => match b.check(env, idx) {
+            Statement::Block(b) => match b.check(env, last_scope) {
                 Ok(ty) => Ok(Some(ty)),
                 Err(e) => Err(e),
             },
-            Statement::FnDecleration(func) => Ok(Some(func.check(env, idx)?)),
+            Statement::FnDecleration(func) => Ok(Some(func.check(env, last_scope)?)),
         };
         match (ret, idx) {
             (Ok(Some(value)), _) => Ok(value),

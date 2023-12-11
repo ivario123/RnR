@@ -3,6 +3,6 @@ fn main() {
     {
         let b = &mut a;
         *b = 2;
-    }
+    };
     println!("a {}", a);
 }

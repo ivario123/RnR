@@ -100,6 +100,9 @@ impl TypeCheck for Func {
             .map(|arg| (arg.id.clone(), arg.ty.clone(), arg.mutable))
             .collect();
 
+        if env.get(idx).unwrap().1.get(id).is_some() {
+            return Err(format!("Duplicate definition of function {id}"));
+        }
         // Add in the new function and assume correctly typed for now
         env.get_mut(idx).unwrap().1.insert(
             id.clone(),

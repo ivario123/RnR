@@ -17,11 +17,13 @@ use crate::ast::{
 #[derive(Debug)]
 pub enum VmErr {
     Err(String),
+    Handled(String),
 }
 impl std::fmt::Display for VmErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             VmErr::Err(e) => write!(f, "{}", e),
+            VmErr::Handled(e) => write!(f, "{}", e),
         }
     }
 }

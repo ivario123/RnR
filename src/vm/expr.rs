@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use super::{op::Operation, Eval, ValueMeta, VarEnv, VmErr};
-use crate::ast::{Expr, Literal};
+use crate::ast::{Expr, Literal, UnaryOp};
 
 impl super::Eval for Expr {
     //.eval_expr

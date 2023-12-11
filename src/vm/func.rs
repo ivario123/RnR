@@ -14,14 +14,9 @@ impl super::Eval for crate::ast::func::Func {
             ))),
         }?;
 
-        let mut tmp_idx = env.len();
-        while let Some(idx) = tmp_idx.checked_sub(1) {
-            tmp_idx = idx;
-            if env.get(idx).unwrap().1.get(&id).is_some() {
-                return Err(VmErr::Err(format!("Function {id} already defined.")));
-            }
+        if env.get(scope).unwrap().1.get(&id).is_some() {
+            return Err(VmErr::Err(format!("Function {id} already defined.")));
         }
-
         let args: Vec<Expr> = self.args.iter().map(|arg| arg.id.clone()).collect();
 
         // Add in the new function and assume correctly typed for now

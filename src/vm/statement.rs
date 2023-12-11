@@ -100,7 +100,7 @@ impl super::Eval for Statement {
                 eprintln!("{}", pretty);
                 // This is a bit ugly, ideally we should have some queue here.
                 // But this interface makes for a nice stack trace
-                Err(VmErr::Err("".to_owned()))
+                Err(VmErr::Handled(e))
             }
             value => value,
         }

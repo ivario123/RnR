@@ -22,6 +22,10 @@ struct Opt {
 }
 
 fn main() {
+    // Set a custom panic hook
+    std::panic::set_hook(Box::new(|panic_info| {
+        let _ = write!(std::io::stderr(), "Panic: {}", panic_info);
+    }));
     let opt = Opt::from_args();
 
     // Open the path in read-only mode, returns `io::Result<File>`
@@ -41,25 +45,28 @@ fn main() {
     print!("rnr parsing: ");
     let parse: Result<rnr::ast::Prog, _> = parse!(ts);
     if parse.is_err() {
-        println!("error: {}", parse.err().unwrap());
+        eprintln!("error: {}", parse.err().unwrap());
         return;
     }
     let prog = parse.unwrap();
     println!("\nrnr prog:\n{}", prog);
-
+    let mut type_check_passed = true;
     if opt.type_check {
         print!("rnr type checking: ");
         match check!(prog) {
             Ok(_) => println!("passed"),
-            Err(err) => println!("error: {}", err),
+            Err(err) => {
+                type_check_passed = false;
+                eprintln!("error: {}", err)
+            }
         }
     }
 
-    if opt.vm {
+    if opt.vm && type_check_passed {
         println!("rnr evaluating");
         match eval!(prog) {
             Ok(_) => println!("rnr evaluating done"),
-            Err(err) => println!("error: {}", err),
+            Err(err) => eprintln!("error: {}", err),
         }
     }
 }
