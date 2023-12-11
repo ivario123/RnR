@@ -103,7 +103,7 @@ impl Parse for Expr {
             input.parse::<crate::ast::Literal>()?.into()
         };
         // now check if right is an Op Expr
-        match input.clone().parse::<BinaryOp>() {
+        match input.parse::<BinaryOp>() {
             Ok(op) => {
                 let right: Expr = input.parse()?;
                 Ok(Expr::BinOp(op, Box::new(left), Box::new(right)))
