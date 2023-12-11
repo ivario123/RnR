@@ -1,5 +1,4 @@
-#![allow(unused_variables)]
-#![allow(dead_code)]
+#![deny(clippy::all)]
 // Once you have back-ported your code
 // you should remove the above attributes.
 // Strive to keep your code free of warnings.
