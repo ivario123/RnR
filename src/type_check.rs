@@ -85,6 +85,9 @@ mod test {
         let e: Statement = syn::parse2(ts).unwrap();
         println!("{}", e);
         let mut env = TypeEnv::new();
+        let scope = super::Scope::new();
+        let fn_scope = super::FunctionScope::new();
+        env.push((scope, fn_scope));
         let len = env.len();
         let ty = e.check(&mut env, len).unwrap();
         assert_eq!(ty, Type::Unit);
@@ -255,6 +258,9 @@ mod test {
         let ts: proc_macro2::TokenStream = "123".parse().unwrap();
         let e: Expr = syn::parse2(ts).unwrap();
         let mut env = TypeEnv::new();
+        let scope = super::Scope::new();
+        let fn_scope = super::FunctionScope::new();
+        env.push((scope, fn_scope));
         let ty = e.check(&mut env, 0).unwrap();
         assert_eq!(ty, Type::I32);
     }

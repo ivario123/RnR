@@ -291,6 +291,6 @@ mod test {
         let ts: proc_macro2::TokenStream = "if a > 5 { 5}".parse().unwrap();
         let e: Expr = syn::parse2(ts).unwrap();
         println!("e {}", e);
-        assert_eq!(format!("{}", e), "if a > 5 {\n 5\n}");
+        assert_eq!(format!("{}", e), "if a > 5 {\n  5\n}");
     }
 }
