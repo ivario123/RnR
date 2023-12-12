@@ -1,4 +1,5 @@
 use super::Eval;
+use super::Values;
 use super::VmErr;
 use crate::ast::program::*;
 use crate::ast::Expr;
@@ -11,7 +12,9 @@ impl Eval for Prog {
         &self,
         env: &mut super::VarEnv,
         scope: usize,
-    ) -> Result<crate::ast::Literal, super::VmErr> {
+        max_iter: usize,
+        iter_coutner: &mut usize,
+    ) -> Result<Values, super::VmErr> {
         let mut global_scope = (crate::vm::Scope::new(), crate::vm::FunctionScope::new());
         // Introduce compile builtins
         let (f, _body) = vm_println();
@@ -21,8 +24,8 @@ impl Eval for Prog {
         };
         env.push(global_scope);
         for el in self.statements.iter() {
-            match el.eval(env, scope)?{
-                crate::ast::Literal::Unit => {},
+            match el.eval(env, scope,max_iter,iter_coutner)?{
+                Values::Lit(crate::ast::Literal::Unit) => {},
                 t => return Err(VmErr::Err(format!("All top level statements should return unit value, got {t} when evaluting {el}"))),
             };
         }
@@ -30,7 +33,7 @@ impl Eval for Prog {
             id: Box::new(Expr::Ident("main".to_owned())),
             args: Box::default(),
         })
-        .eval(env, scope)?;
-        Ok(Literal::Unit)
+        .eval(env, scope, max_iter, iter_coutner)?;
+        Ok(Values::Lit(Literal::Unit))
     }
 }

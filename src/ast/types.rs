@@ -8,14 +8,15 @@ pub enum Type {
     Usize,
     Array(Box<Type>, usize),
     Ref(Ref),
+    MutRef(Ref),
     String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Ref(pub Box<Type>);
+pub struct Ref(pub Box<Type>, pub usize);
 
 impl From<Type> for Ref {
     fn from(value: Type) -> Self {
-        Ref(Box::new(value))
+        Ref(Box::new(value), 0)
     }
 }

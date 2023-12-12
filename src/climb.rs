@@ -186,7 +186,8 @@ pub fn climb(e: Expr) -> Expr {
 mod test {
     use super::*;
     use crate::ast::{Expr, Literal};
-    use crate::vm::{Eval, VarEnv};
+    use crate::eval;
+    use crate::vm::{Eval, Values, VarEnv};
     #[test]
     fn climb_test1() {
         let ts: proc_macro2::TokenStream = "2 - 3 - 4 - 5".parse().unwrap();
@@ -194,9 +195,10 @@ mod test {
         println!("e {:?}", e);
         let e = climb(e);
         println!("e {:?}", e);
-        let o = e.eval(&mut VarEnv::new(), 0).unwrap();
+        let iter_counter = 100;
+        let o = eval!(e, iter_counter).unwrap();
         println!("evaluation {:?}", o);
-        assert_eq!(o, Literal::Int(2 - 3 - 4 - 5));
+        assert_eq!(o, Values::Lit(Literal::Int(2 - 3 - 4 - 5)));
     }
 
     #[test]
@@ -205,10 +207,10 @@ mod test {
         let e: Expr = syn::parse2(ts).unwrap();
         println!("e {:?}", e);
         let e = climb(e);
-        println!("e {:?}", e);
-        let o = e.eval(&mut VarEnv::new(), 0).unwrap();
+        let iter_counter = 100;
+        let o = eval!(e, iter_counter).unwrap();
         println!("evaluation {:?}", o);
-        assert_eq!(o, Literal::Int(2 - 3 * 4 - 5));
+        assert_eq!(o, Values::Lit(Literal::Int(2 - 3 * 4 - 5)));
     }
 
     #[test]
@@ -217,10 +219,10 @@ mod test {
         let e: Expr = syn::parse2(ts).unwrap();
         println!("e {:?}", e);
         let e = climb(e);
-        println!("e {:?}", e);
-        let o = e.eval(&mut VarEnv::new(), 0).unwrap();
+        let iter_counter = 100;
+        let o = eval!(e, iter_counter).unwrap();
         println!("evaluation {:?}", o);
-        assert_eq!(o, Literal::Int(4 - 5 - 2 * 8 * 3 - 1 - 2 * 5));
+        assert_eq!(o, Values::Lit(Literal::Int(4 - 5 - 2 * 8 * 3 - 1 - 2 * 5)));
     }
 
     #[test]
@@ -230,9 +232,10 @@ mod test {
         println!("e {:?}", e);
         let e = climb(e);
         println!("e {:?}", e);
-        let o = e.eval(&mut VarEnv::new(), 0).unwrap();
+        let iter_counter = 100;
+        let o = eval!(e, iter_counter).unwrap();
         println!("evaluation {:?}", o);
-        assert_eq!(o, Literal::Int(8 - 7 - 6 * 5 - 4 * 3));
+        assert_eq!(o, Values::Lit(Literal::Int(8 - 7 - 6 * 5 - 4 * 3)));
     }
     #[test]
     #[allow(clippy::nonminimal_bool)]
@@ -242,9 +245,10 @@ mod test {
         println!("e {:?}", e);
         let e = climb(e);
         println!("e {:?}", e);
-        let o = e.eval(&mut VarEnv::new(), 0).unwrap();
+        let iter_counter = 100;
+        let o = eval!(e, iter_counter).unwrap();
         println!("evaluation {:?}", o);
-        assert_eq!(o, Literal::Bool(true && !false));
+        assert_eq!(o, Values::Lit(Literal::Bool(true && !false)));
     }
     #[test]
     fn climb_test_minus() {

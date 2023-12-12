@@ -49,8 +49,8 @@ macro_rules! check {
 }
 #[macro_export]
 macro_rules! eval {
-    ($id:ident) => {
-        $id.eval(&mut VarEnv::new(), 0)
+    ($id:ident,$iter:ident) => {
+        $id.eval(&mut VarEnv::new(), 0, $iter, &mut 0)
     };
 }
 #[macro_export]

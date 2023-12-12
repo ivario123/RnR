@@ -1,8 +1,14 @@
-use super::VmErr;
+use super::{Values, VmErr};
 use crate::ast::{Expr, Literal};
 
 impl super::Eval for crate::ast::func::Func {
-    fn eval(&self, env: &mut super::VarEnv, scope: usize) -> Result<Literal, VmErr> {
+    fn eval(
+        &self,
+        env: &mut super::VarEnv,
+        scope: usize,
+        _max_iter: usize,
+        _iter_counter: &mut usize,
+    ) -> Result<Values, VmErr> {
         // We have a function decleration, this should be inserted into the fn env and then
         // the 0th env and a new function env should be used to check wether or not the
         // internal code is valid
@@ -34,6 +40,6 @@ impl super::Eval for crate::ast::func::Func {
         };
 
         env.get_mut(scope).unwrap().1.insert(id, meta);
-        Ok(Literal::Unit)
+        Ok(Values::Lit(Literal::Unit))
     }
 }

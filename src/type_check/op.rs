@@ -36,9 +36,10 @@ impl Operation for UnaryOp {
             Self::Not => Ok(super::Type::Bool),
             Self::Subtract => Ok(super::Type::I32),
             Self::Borrow => Ok(super::Type::Ref(operands.into())),
-            Self::BorrowMut => Ok(super::Type::Ref(operands.into())),
+            Self::BorrowMut => Ok(super::Type::MutRef(operands.into())),
             Self::Dereff => match operands {
-                super::Type::Ref(crate::ast::types::Ref(ty)) => Ok(*ty),
+                super::Type::Ref(crate::ast::types::Ref(ty, _)) => Ok(*ty),
+                super::Type::MutRef(crate::ast::types::Ref(ty, _)) => Ok(*ty),
                 ty => Err(format!("Cannot treat {} as a refference", ty)),
             },
         }
@@ -49,7 +50,10 @@ impl Operation for UnaryOp {
             Self::Subtract => operands == super::Type::I32,
             Self::Borrow => true,
             Self::BorrowMut => true,
-            Self::Dereff => matches!(operands, super::Type::Ref(_)),
+            Self::Dereff => {
+                matches!(operands, super::Type::Ref(_))
+                    || matches!(operands, super::Type::MutRef(_))
+            }
         }
     }
 }

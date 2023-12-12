@@ -2,7 +2,7 @@ use crate::ast::{Arg, Block, Expr, Func, Type};
 use regex::Regex;
 // Implementation of intrinsics for the vm
 use crate::ast::Literal;
-pub type Intrinsic = fn(Vec<Literal>) -> Literal;
+pub type Intrinsic = fn(Vec<crate::vm::Values>) -> crate::vm::Values;
 
 pub fn vm_println() -> (Func, Intrinsic) {
     (
@@ -26,9 +26,9 @@ pub fn vm_println() -> (Func, Intrinsic) {
                 semi: false,
             },
         },
-        |lit_vec| {
+        |lit_vec: Vec<crate::vm::Values>| {
             match &lit_vec[0] {
-                Literal::String(s) => {
+                crate::vm::Values::Lit(Literal::String(s)) => {
                     // this regex will find either '{}' or '{:?}'
                     let re = Regex::new(r"\{(:\?)?\}").unwrap();
 
@@ -49,7 +49,7 @@ pub fn vm_println() -> (Func, Intrinsic) {
                 }
                 _ => panic!("ICE - no formatting string in println!"),
             }
-            Literal::Unit
+            crate::vm::Values::Lit(Literal::Unit)
         },
     )
 }

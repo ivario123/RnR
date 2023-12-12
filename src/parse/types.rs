@@ -24,6 +24,11 @@ impl Parse for Type {
                 _ => panic!("Expected usize"),
             };
             return Ok(Type::Array(Box::new(t), count));
+        } else if input.peek(Token![&]) && input.peek2(syn::token::Mut) {
+            let _: Token![&] = input.parse()?;
+            let _: syn::token::Mut = input.parse()?;
+            let t: Type = input.parse()?;
+            return Ok(Type::MutRef(t.into()));
         } else if input.peek(Token![&]) {
             let _: Token![&] = input.parse()?;
             let t: Type = input.parse()?;

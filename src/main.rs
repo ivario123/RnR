@@ -19,6 +19,10 @@ struct Opt {
     /// Type checking
     #[structopt(short, long)]
     type_check: bool,
+
+    /// Maximum number of statements to execute
+    #[structopt(short, long, default_value = "100")]
+    max_iter: usize,
 }
 
 fn main() {
@@ -64,7 +68,8 @@ fn main() {
 
     if opt.vm && type_check_passed {
         println!("rnr evaluating");
-        match eval!(prog) {
+        let iter = opt.max_iter;
+        match eval!(prog, iter) {
             Ok(_) => println!("rnr evaluating done"),
             Err(err) => eprintln!("error: {}", err),
         }

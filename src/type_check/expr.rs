@@ -11,7 +11,6 @@ impl super::TypeCheck for Expr {
         if env.len() < idx || env.len() == 0 {
             return Err("No scope decleared".to_owned());
         }
-        println!("Evaluating : {self}");
         let ret = match self.clone() {
             Expr::Ident(id) => {
                 let res = env.get(idx);
@@ -23,13 +22,10 @@ impl super::TypeCheck for Expr {
                 let res = scope.0.get(&id);
 
                 match (res, idx) {
-                    (Some(t), _) => {
-                        println!("Found {id}");
-                        match &t.ty {
-                            Some(t) => Ok(t.clone()),
-                            _ => Err(format!("Type of variable {id} must be known at this point")),
-                        }
-                    }
+                    (Some(t), _) => match &t.ty {
+                        Some(t) => Ok(t.clone()),
+                        _ => Err(format!("Type of variable {id} must be known at this point")),
+                    },
                     // Look for identifier in earlier scopes
                     (_, 0) => Err(format!("variable {id} not found")),
                     (_, _) => self.check(env, idx - 1),

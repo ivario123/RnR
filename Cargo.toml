@@ -8,6 +8,7 @@ proc-macro2 = "1.0.69"
 quote = "1.0.33"
 regex = "1.10.2"
 structopt = "0.3.26"
+ansi_term = "0.12.1"
 
 [dependencies.syn]
 features = ["full", "extra-traits"]

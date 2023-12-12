@@ -1,8 +1,77 @@
 use super::{Arg, Func, FuncCall, Prog};
 use crate::ast::{BinaryOp, Block, Expr, Literal, Statement, Type, UnaryOp};
-
 use std::fmt::{self};
 
+enum KeyWords {
+    Let,
+    Fn,
+    While,
+}
+
+#[cfg(test)]
+mod color_test {
+
+    impl std::fmt::Display for super::KeyWords {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let s = match self {
+                super::KeyWords::Let => "let",
+                super::KeyWords::Fn => "fn",
+                super::KeyWords::While => "while",
+            }
+            .to_string();
+            write!(f, "{}", s)
+        }
+    }
+    pub fn identifier(id: &str) -> String {
+        id.to_string()
+    }
+    pub fn fn_identifier(id: &str) -> String {
+        id.to_string()
+    }
+    pub fn ty(id: String) -> String {
+        id
+    }
+    pub fn lit(id: String) -> String {
+        id
+    }
+}
+#[cfg(not(test))]
+mod color_normal {
+    use ansi_term::Colour::Blue;
+    use ansi_term::Colour::Cyan;
+    use ansi_term::Colour::Purple;
+    use ansi_term::Colour::Red;
+    use ansi_term::Colour::Yellow;
+
+    impl std::fmt::Display for super::KeyWords {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let s = match self {
+                super::KeyWords::Let => Purple.paint("let"),
+                super::KeyWords::Fn => Purple.paint("fn"),
+                super::KeyWords::While => Purple.paint("while"),
+            }
+            .to_string();
+            write!(f, "{}", s)
+        }
+    }
+
+    pub fn identifier(id: &str) -> String {
+        Cyan.paint(id).to_string()
+    }
+    pub fn fn_identifier(id: &str) -> String {
+        Blue.paint(id).to_string()
+    }
+    pub fn ty(id: String) -> String {
+        Yellow.paint(id).to_string()
+    }
+    pub fn lit(id: String) -> String {
+        Red.paint(id).to_string()
+    }
+}
+#[cfg(not(test))]
+use color_normal::*;
+#[cfg(test)]
+use color_test::*;
 mod sealed {
 
     pub trait InteralFormat {
@@ -35,17 +104,19 @@ impl InteralFormat for Prog {
 impl InteralFormat for Statement {
     fn fmt_internal(&self, indent: usize) -> String {
         let str = match self {
-            Statement::Let(lhs, mutable, ty, rhs) => {
+            Statement::Let(lhs, mutable, typ, rhs) => {
                 format!(
-                    "let {}{}{}{}",
+                    "{} {}{}{}{}",
+                    KeyWords::Let,
                     match mutable {
-                        true => "mut ",
-                        _ => "",
+                        true => ty("mut ".to_owned()),
+                        _ => "".to_owned(),
                     }
                     .to_owned(),
-                    lhs,
-                    match ty {
+                    identifier(format!("{}", lhs).as_str()),
+                    match typ {
                         Some(ty) => format!(" : {ty}"),
+
                         _ => "".to_owned(),
                     },
                     match rhs {
@@ -58,13 +129,17 @@ impl InteralFormat for Statement {
 
             Statement::Expr(expr) => expr.fmt_internal(indent).to_string(),
             Statement::While(condition, block) => {
-                format!("while {condition} {}", block.fmt_internal(indent + 1))
+                format!(
+                    "{} {condition} {}",
+                    KeyWords::While,
+                    block.fmt_internal(indent + 1)
+                )
             }
             Statement::Assign(lhs, rhs) => {
                 format!("{lhs} = {}", rhs.fmt_internal(indent))
             }
             Statement::Block(b) => b.fmt_internal(indent),
-            Statement::FnDecleration(func) => func.fmt_internal(indent + 1),
+            Statement::FnDecleration(func) => func.fmt_internal(indent),
         };
         format!("{}{};", " ".repeat(indent), str)
     }
@@ -72,10 +147,14 @@ impl InteralFormat for Statement {
 
 impl InteralFormat for Func {
     fn fmt_internal(&self, indent: usize) -> String {
+        let id = match self.id.clone() {
+            Expr::Ident(i) => i,
+            _ => unreachable!(),
+        };
         format!(
-            "{}fn {}({}) -> {} {}",
-            " ".repeat(indent),
-            self.id,
+            "{} {}({}) -> {} {}",
+            KeyWords::Fn,
+            fn_identifier(id.as_str()),
             self.args
                 .iter()
                 .map(|el| format!("{el}"))
@@ -91,7 +170,7 @@ impl InteralFormat for Block {
     fn fmt_internal(&self, indent: usize) -> String {
         let mut strings = vec![];
         for statement in &self.statements {
-            strings.push(statement.fmt_internal(indent + 1));
+            strings.push(statement.fmt_internal(indent + 4));
         }
         if !self.semi && !strings.is_empty() {
             let mut last: String = strings.pop().unwrap();
@@ -108,7 +187,7 @@ impl InteralFormat for Block {
 impl InteralFormat for Expr {
     fn fmt_internal(&self, indent: usize) -> String {
         match self {
-            Expr::Ident(a) => a.to_owned(),
+            Expr::Ident(a) => identifier(a),
             Expr::Lit(l) => format!("{}", l),
             Expr::BinOp(op, l, r) => format!("{} {} {}", l, op, r.fmt_internal(indent)),
             Expr::UnOp(op, operand) => format!("{}{}", op, operand.fmt_internal(indent)),
@@ -161,10 +240,14 @@ fmt!(Prog, Block, Func, Expr, Statement,);
 
 impl fmt::Display for FuncCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let id = match *self.id.clone() {
+            Expr::Ident(i) => i,
+            _ => unreachable!(),
+        };
         write!(
             f,
             "{}({})",
-            self.id,
+            fn_identifier(id.as_str()),
             self.args
                 .iter()
                 .map(|v| format!("{}", v))
@@ -178,10 +261,10 @@ impl fmt::Display for Arg {
         write!(
             f,
             "{}:{} {}",
-            self.id,
+            identifier(format!("{}", self.id).as_str()),
             match self.mutable {
-                true => "mut",
-                false => "",
+                true => ty("mut".to_owned()),
+                false => "".to_owned(),
             },
             self.ty
         )
@@ -190,11 +273,11 @@ impl fmt::Display for Arg {
 impl fmt::Display for UnaryOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            UnaryOp::Not => "!",
-            UnaryOp::Subtract => "- ",
-            UnaryOp::Borrow => "&",
-            UnaryOp::BorrowMut => "&mut ",
-            UnaryOp::Dereff => "*",
+            UnaryOp::Not => "!".to_string(),
+            UnaryOp::Subtract => "- ".to_string(),
+            UnaryOp::Borrow => "&".to_string(),
+            UnaryOp::BorrowMut => format!("&{} ", ty("mut".to_string())),
+            UnaryOp::Dereff => "*".to_string(),
         };
         write!(f, "{}", s)
     }
@@ -203,18 +286,18 @@ impl fmt::Display for UnaryOp {
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            Literal::Bool(b) => b.to_string(),
-            Literal::Int(i) => i.to_string(),
-            Literal::Unit => "()".to_string(),
+            Literal::Bool(b) => lit(b.to_string()),
+            Literal::Int(i) => lit(i.to_string()),
+            Literal::Unit => lit("()".to_string()),
             Literal::Array(arr) => format!(
                 "[{}]",
                 arr.iter()
-                    .map(|el| format!("{}", *el).to_owned())
+                    .map(|el| lit(format!("{}", *el).to_owned()))
                     .collect::<Vec<String>>()
                     .join(",")
             )
             .to_owned(),
-            Literal::String(str) => str.to_string(),
+            Literal::String(str) => lit(str.to_string()),
         };
         write!(f, "{}", s)
     }
@@ -223,13 +306,14 @@ impl fmt::Display for Literal {
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            Type::I32 => "i32".to_owned(),
-            Type::Bool => "bool".to_owned(),
-            Type::Unit => "()".to_owned(),
-            Type::Usize => "usize".to_owned(),
-            Type::Array(ty, size) => format!("[{ty};{size}]"),
-            Type::Ref(crate::ast::types::Ref(ty)) => format!("& {ty}"),
-            Type::String => "String".to_string(),
+            Type::I32 => ty("i32".to_owned()),
+            Type::Bool => ty("bool".to_owned()),
+            Type::Unit => ty("()".to_owned()),
+            Type::Usize => ty("usize".to_owned()),
+            Type::Array(typ, size) => format!("[{};{size}]", ty(typ.to_string())),
+            Type::Ref(crate::ast::types::Ref(ty, _)) => format!("& {ty}"),
+            Type::String => ty("String".to_string()),
+            Type::MutRef(crate::ast::types::Ref(ty, _)) => format!("&mut {ty}"),
         };
         write!(f, "{}", s)
     }
@@ -291,6 +375,6 @@ mod test {
         let ts: proc_macro2::TokenStream = "if a > 5 { 5}".parse().unwrap();
         let e: Expr = syn::parse2(ts).unwrap();
         println!("e {}", e);
-        assert_eq!(format!("{}", e), "if a > 5 {\n  5\n}");
+        assert_eq!(format!("{}", e), "if a > 5 {\n     5\n}");
     }
 }

@@ -27,11 +27,33 @@ impl std::fmt::Display for VmErr {
         }
     }
 }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Values {
+    Lit(Literal),
+    Ref((String, usize)),
+}
 
+impl Values {
+    pub fn lit(self) -> Literal {
+        match self {
+            Values::Lit(l) => l,
+            _ => panic!(),
+        }
+    }
+}
+impl std::fmt::Display for Values {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Values::Lit(l) => l.to_string(),
+            Values::Ref((id, _)) => format!("&{id}"),
+        };
+        write!(f, "{}", s)
+    }
+}
 /// Describes all of the needed data for a value.
 #[derive(Debug, Clone)]
 pub struct ValueMeta {
-    value: Option<Literal>,
+    value: Option<Values>,
 }
 #[derive(Debug, Clone)]
 pub struct FunctionMeta {
@@ -67,7 +89,13 @@ pub type Scope = HashMap<String, ValueMeta>;
 pub type VarEnv = Vec<(Scope, FunctionScope)>;
 
 pub trait Eval {
-    fn eval(&self, env: &mut VarEnv, scope: usize) -> Result<Literal, VmErr>;
+    fn eval(
+        &self,
+        env: &mut VarEnv,
+        scope: usize,
+        max_iter: usize,
+        iter_counter: &mut usize,
+    ) -> Result<Values, VmErr>;
 }
 
 impl Literal {
@@ -88,20 +116,28 @@ impl Literal {
 
 impl BinaryOp {
     // Evaluate operator to literal
-    pub fn eval(&self, left: Literal, right: Literal) -> Result<Literal, VmErr> {
+    pub fn eval(&self, left: Values, right: Values) -> Result<Values, VmErr> {
         use BinaryOp::*;
         use Literal::{Bool, Int};
-        match self {
-            Add => Ok(Int(left.get_int()? + right.get_int()?)),
-            Sub => Ok(Int(left.get_int()? - right.get_int()?)),
-            Mul => Ok(Int(left.get_int()? * right.get_int()?)),
-            Div => Ok(Int(left.get_int()? / right.get_int()?)),
-            And => Ok(Bool(left.get_bool()? && right.get_bool()?)),
-            Or => Ok(Bool(left.get_bool()? || right.get_bool()?)),
-            Eq => Ok(Bool(left == right)), // overloading
-            Lt => Ok(Bool(left.get_int()? < right.get_int()?)),
-            Gt => Ok(Bool(left.get_int()? > right.get_int()?)),
-        }
+        let (left, right) = match (left, right) {
+            (Values::Lit(left), Values::Lit(right)) => (left, right),
+            (l, r) => {
+                return Err(VmErr::Err(format!(
+                    "Cannot peform operations on refferences. {l:?} and {r:?} should be literals"
+                )))
+            }
+        };
+        Ok(Values::Lit(match self {
+            Add => Int(left.get_int()? + right.get_int()?),
+            Sub => Int(left.get_int()?) - Int(right.get_int()?),
+            Mul => Int(left.get_int()? * right.get_int()?),
+            Div => Int(left.get_int()? / right.get_int()?),
+            And => Bool(left.get_bool()? && right.get_bool()?),
+            Or => Bool(left.get_bool()? || right.get_bool()?),
+            Eq => Bool(left == right), // overloading
+            Lt => Bool(left.get_int()? < right.get_int()?),
+            Gt => Bool(left.get_int()? > right.get_int()?),
+        }))
     }
 }
 
@@ -132,9 +168,9 @@ mod test {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        let l = bl.eval(&mut VarEnv::new(), 0, 100, &mut 0).unwrap();
         println!("l {:?}", l);
-        assert_eq!(l.get_int().unwrap(), 4);
+        assert_eq!(l.lit().get_int().unwrap(), 4);
     }
 
     #[test]
@@ -157,9 +193,9 @@ mod test {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        let l = bl.eval(&mut VarEnv::new(), 0, 100, &mut 0).unwrap();
         println!("l {:?}", l);
-        assert_eq!(l.get_int().unwrap(), 5);
+        assert_eq!(l.lit().get_int().unwrap(), 5);
     }
 
     #[test]
@@ -180,10 +216,10 @@ mod test {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        let l = bl.eval(&mut VarEnv::new(), 0, 100, &mut 0).unwrap();
         println!("l {:?}", l);
         // notice this will fail
-        assert_eq!(l.get_int().unwrap(), 3);
+        assert_eq!(l.lit().get_int().unwrap(), 3);
     }
 
     #[test]
@@ -203,9 +239,9 @@ mod test {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        let l = bl.eval(&mut VarEnv::new(), 0, 100, &mut 0).unwrap();
         println!("l {:?}", l);
-        assert_eq!(l.get_int().unwrap(), 3);
+        assert_eq!(l.lit().get_int().unwrap(), 3);
     }
 
     #[test]
@@ -222,9 +258,9 @@ mod test {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        let l = bl.eval(&mut VarEnv::new(), 0, 100, &mut 0).unwrap();
         println!("l {:?}", l);
-        assert_eq!(l.get_int().unwrap(), 1);
+        assert_eq!(l.lit().get_int().unwrap(), 1);
     }
 
     #[test]
@@ -241,8 +277,8 @@ mod test {
         .unwrap();
         let bl: Block = syn::parse2(ts).unwrap();
         println!("bl {:?}", bl);
-        let l = bl.eval(&mut VarEnv::new(), 0).unwrap();
+        let l = bl.eval(&mut VarEnv::new(), 0, 100, &mut 0).unwrap();
         println!("l {:?}", l);
-        assert_eq!(l.get_int().unwrap(), 2);
+        assert_eq!(l.lit().get_int().unwrap(), 2);
     }
 }

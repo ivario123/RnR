@@ -1,5 +1,5 @@
 use super::{TypeEnv, TypeErr, ValueMeta};
-use crate::ast::{Expr, Statement, Type};
+use crate::ast::{Expr, Statement, Type, UnaryOp};
 
 impl super::TypeCheck for Statement {
     type ReturnType = Type;
@@ -7,7 +7,6 @@ impl super::TypeCheck for Statement {
         if env.len() < idx {
             return Err("Trying to read from undecleared scope".to_owned());
         }
-        println!("Evaluating {self}");
         let last_scope = match env.len() {
             0 => 0,
             l => l - 1,
@@ -76,6 +75,22 @@ impl super::TypeCheck for Statement {
                         match *id {
                             Expr::Ident(id) => Ok((id, intermediate)),
                             ty => Err(format!("Cannot use {ty} as identifier")),
+                        }
+                    }
+                    Expr::UnOp(UnaryOp::Dereff, e) => {
+                        let id = match *e.clone() {
+                            Expr::Ident(i) => i,
+                            e => {
+                                return Err(format!(
+                                    "Cannot derefference non identifier expression {e}"
+                                ))
+                            }
+                        };
+
+                        let ty = e.check(env, env.len() - 1)?;
+                        match ty {
+                            Type::MutRef(crate::ast::types::Ref(ty, _)) => Ok((id, Some(*ty))),
+                            e => Err(format!("Cannot treat {e} as a mutable borrow")),
                         }
                     }
 
