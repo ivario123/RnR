@@ -60,7 +60,9 @@ impl TypeCheck for FuncCall {
             Some(fndec) => fndec,
             _ => return Err(format!("Tried to call undefined function {id}")),
         };
-
+        if id == *"println!" {
+            return Ok(Type::Unit);
+        }
         if fndec.args.len() != args.len() {
             return Err(format!(
                 "Expected {} arguments but got {}",
@@ -80,7 +82,7 @@ impl TypeCheck for FuncCall {
                 ));
             }
         }
-        Ok(fndec.ty.clone())
+        Ok(fndec.ty)
     }
 }
 

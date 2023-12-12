@@ -1,5 +1,5 @@
 use super::{Operation, TypeEnv, TypeErr};
-use crate::ast::{Expr, Literal, Type};
+use crate::ast::{Expr, Literal, Type, UnaryOp};
 
 impl super::TypeCheck for Expr {
     type ReturnType = Type;
@@ -68,6 +68,46 @@ impl super::TypeCheck for Expr {
                         }
                         _ => Ok(t),
                     }
+                }
+            }
+            Expr::UnOp(UnaryOp::BorrowMut, e) => {
+                // This deviates from the rust syntax.
+                //
+                // At this time I don not want to allow borrowing of intermediate values, these
+                // should simply be stored in a temporary variable.
+                let id = match *e.clone() {
+                    Expr::Ident(i) => Ok(i),
+                    e => Err(format!("Cannot treat {e} as an identifier")),
+                }?;
+                let mut last_idx = env.len();
+                let mut meta = None;
+                while let Some(idx) = last_idx.checked_sub(1) {
+                    if let Some(inner_meta) = env.get(idx).unwrap().0.get(&id) {
+                        meta = Some(inner_meta.clone());
+                    };
+                    last_idx = idx;
+                }
+                let meta = match meta {
+                    Some(meta) => Ok(meta),
+                    _ => Err(format!("Cannot locate {id}")),
+                }?;
+
+                if !meta.mutable {
+                    return Err(format!(
+                        "For {self} to be valid {e} has to be decleared as mutable"
+                    ));
+                };
+                let got = match meta.ty {
+                    Some(ty) => Ok(ty),
+                    _ => Err(format!(
+                        "Type of {e} must be known before a refference to it can be constructed"
+                    )),
+                }?;
+                let expected = UnaryOp::BorrowMut.return_type(got.clone())?;
+
+                match UnaryOp::BorrowMut.type_check(got.clone()) {
+                    true => Ok(expected),
+                    false => Err(format!("Cannot perform {} on {got}", UnaryOp::BorrowMut)),
                 }
             }
             Expr::UnOp(op, e) => {

@@ -22,6 +22,7 @@ pub mod intrinsics;
 // semantic analysis
 pub mod type_check;
 // natural interpretation
+pub mod codegen;
 pub mod vm;
 // borrow checking
 // pub mod bc;
