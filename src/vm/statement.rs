@@ -28,11 +28,11 @@ impl Statement {
                     _ => None,
                 };
                 let meta = ValueMeta { value: expr_type };
-
-                env.get_mut(scope)
-                    .unwrap()
-                    .0
-                    .insert(format!("{}", id), meta.clone());
+                let id = match id {
+                    Expr::Ident(i) => i,
+                    e => return Err(VmErr::Err(format!("Cannot use {e} as an identifier"))),
+                };
+                env.get_mut(scope).unwrap().0.insert(id, meta.clone());
                 Ok(Values::Lit(Literal::Unit))
             }
             Statement::Expr(e) => {

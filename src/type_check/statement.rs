@@ -38,10 +38,11 @@ impl super::TypeCheck for Statement {
                     ty,
                     mutable,
                 };
-                env.get_mut(idx)
-                    .unwrap()
-                    .0
-                    .insert(format!("{}", id), meta.clone());
+                let id = match id {
+                    Expr::Ident(i) => i,
+                    e => return Err(format!("Cannot use {e} as an identifier")),
+                };
+                env.get_mut(idx).unwrap().0.insert(id, meta.clone());
                 Ok(Some(Type::Unit))
             }
 

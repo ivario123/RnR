@@ -11,6 +11,7 @@ impl super::TypeCheck for Expr {
         if env.len() < idx || env.len() == 0 {
             return Err("No scope decleared".to_owned());
         }
+        println!("self: {self} @ {idx}");
         let ret = match self.clone() {
             Expr::Ident(id) => {
                 let res = env.get(idx);

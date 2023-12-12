@@ -11,5 +11,5 @@ for file in $(find -name "*.rs"); do
   echo "-----------------------"
   echo ""
   echo ""
-  ../target/release/rnr "$file" --type-check --vm   
+  ../target/release/rnr "$file" --type-check --vm -m 10 
 done;
