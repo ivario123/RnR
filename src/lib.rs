@@ -44,12 +44,38 @@ pub struct Ast<T: Parse + TypeCheck + Eval> {
 
 impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
     fn from(value: String) -> Self {
+        let map = |el: Vec<String>, r: std::ops::Range<usize>| {
+            let r_clone = r.clone();
+            let intermediate = el
+                .iter()
+                .enumerate()
+                .map(|(idx, el)| match r.contains(&idx) {
+                    true => Some(el),
+                    false => None,
+                });
+            let mut ret = vec![];
+            for (el, idx) in intermediate.zip(r_clone.into_iter()) {
+                if el.is_some() {
+                    ret.push(format!("{idx}|\t{}", el.unwrap().clone()));
+                }
+            }
+            ret.join("\n")
+        };
+
         let ts: proc_macro2::TokenStream = match value.parse() {
             Ok(ts) => ts,
             Err(e) => {
-                let line = e.span().start().line - 1;
-                let lines = value.lines().nth(line).unwrap_or("");
-                eprintln!("Error {e} occured on line \n{line}|\t{lines}");
+                let line = e.span().start().line;
+                let lines = map(
+                    value
+                        .lines()
+                        .into_iter()
+                        .map(|el| el.to_string())
+                        .collect::<Vec<String>>(),
+                    line - 4..line + 5,
+                );
+
+                eprintln!("Error {e} occured on line {} \n{lines}", line);
 
                 panic!("Invalid input");
             }
@@ -58,23 +84,6 @@ impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
             Ok(ts) => ts,
             Err(e) => {
                 let line = e.span().start().line;
-                let map = |el: Vec<String>, r: std::ops::Range<usize>| {
-                    let r_clone = r.clone();
-                    let intermediate =
-                        el.iter()
-                            .enumerate()
-                            .map(|(idx, el)| match r.contains(&idx) {
-                                true => Some(el),
-                                false => None,
-                            });
-                    let mut ret = vec![];
-                    for (el, idx) in intermediate.zip(r_clone.into_iter()) {
-                        if el.is_some() {
-                            ret.push(format!("{idx}|\t{}", el.unwrap().clone()));
-                        }
-                    }
-                    ret.join("\n")
-                };
                 let lines = map(
                     value
                         .lines()

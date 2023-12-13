@@ -64,11 +64,11 @@ impl Parse for Expr {
             || input.peek(Token![&])
             || input.peek(Token![*])
         {
-            //println!("Paring a unary op");
+            println!("Paring a unary op {input:?}");
             // We have a UnaryOp
             let op: UnaryOp = input.parse()?;
             let operand: Expr = input.parse()?;
-            Expr::UnOp(op, Box::new(operand))
+            return Ok(Expr::UnOp(op, Box::new(operand)));
         } else if input.peek(syn::token::Bracket) {
             //println!("Parsing an array decleration");
             // This is an array

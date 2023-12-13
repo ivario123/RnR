@@ -74,7 +74,6 @@ impl super::Eval for Expr {
                     let mut last_scope = env.len();
                     let mut scope = None;
                     while let Some(_) = last_scope.checked_sub(1) {
-                        println!("Checking {:?} for {i}", env.get(last_scope));
                         last_scope -= 1;
                         let res = env.get(last_scope).unwrap().0.get(&i);
                         if res.is_some() {
@@ -175,7 +174,6 @@ impl super::Eval for Expr {
                 }
             }
             Expr::FuncCall(call) => {
-                println!("Trying to call {call}");
                 let curr_scope = match env.get(scope) {
                     Some(env) => Ok(env.clone()),
                     _ => Err(VmErr::Err("Invalid scope usage".to_owned())),
@@ -194,7 +192,6 @@ impl super::Eval for Expr {
                 let mut args = vec![];
                 let mut values = vec![];
                 for (arg, value) in fndec.args.iter().zip(call.args.iter()) {
-                    println!("Trying to locate {value}");
                     let intermediate = value.eval(env, last_scope, max_iter, iter_counter)?;
                     values.push(intermediate.clone());
                     args.push((arg.clone(), intermediate));
@@ -229,7 +226,15 @@ impl super::Eval for Expr {
                 let ret = match func_name == *"println!" {
                     true => {
                         let (_f, body) = crate::intrinsics::vm_println();
-                        body(values)
+                        let args = call
+                            .args
+                            .iter()
+                            .map(|arg| {
+                                arg.eval(env, env.len() - 1, max_iter, iter_counter)
+                                    .unwrap()
+                            })
+                            .collect::<Vec<Values>>();
+                        body(args)
                     }
                     false => fndec
                         .body

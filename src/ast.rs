@@ -18,11 +18,14 @@ pub use program::*;
 pub use statement::*;
 pub use types::*;
 
-/// Denotes that a type is simply evaluatable, this means that it does not need any other
-/// information except it self to be evaluated
-pub trait Eval {
-    fn eval(self) -> Literal;
+use crate::prelude::TypeCheck;
+
+#[allow(dead_code)]
+pub struct AstNode<T: TypeCheck> {
+    node: T,
+    span: proc_macro2::Span,
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
