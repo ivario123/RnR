@@ -37,9 +37,8 @@ fn parse_let(input: ParseStream) -> Result<Statement> {
     };
     Ok(Statement::Let(left, mutable, ty, right))
 }
-
-impl Parse for Statement {
-    fn parse(input: ParseStream) -> Result<Statement> {
+impl Statement {
+    fn parse_inner(input: ParseStream) -> Result<Statement> {
         if input.peek(syn::token::Let) {
             parse_let(input)
         } else if input.peek(syn::token::Fn) {
@@ -98,6 +97,35 @@ impl Parse for Statement {
             } else {
                 // 1 + 5
                 Ok(Statement::Expr(left))
+            }
+        }
+    }
+}
+impl Parse for Statement {
+    fn parse(input: ParseStream) -> Result<Statement> {
+        let outer = input.span();
+        match Statement::parse_inner(input) {
+            Ok(statement) => Ok(statement),
+            Err(e) => {
+                let span = e.span();
+                //let file = span.source_file().to_string();
+                //println!("{}", file);
+                let start = span.start();
+                let row = start.line;
+                let col = start.column;
+                let end = span.end();
+                let end_row = end.line;
+                let end_col = end.column;
+                eprintln!(
+                    "Error {e} occured while parsing token {} on line {} @ col {} until line {} @ col {}",
+                    //e.span().source_text().unwrap_or("".to_string()),
+                    e.span().located_at(outer).source_text().unwrap_or("".to_string()),
+                    row,
+                    col,
+                    end_row,
+                    end_col
+                );
+                Err(e)
             }
         }
     }

@@ -44,7 +44,7 @@ pub type FunctionScope = HashMap<String, FunctionMeta>;
 pub type Scope = HashMap<String, ValueMeta>;
 /// Represents all program [`Scope`]s
 pub type TypeEnv = Vec<(Scope, FunctionScope)>;
-type TypeErr = String;
+pub type TypeErr = String;
 
 /// Denotes that a type is simply TypeCheckable.
 ///

@@ -1,5 +1,6 @@
 use super::{Block, Parse, ParseStream, Result, Statement, Token};
 use syn::punctuated::Punctuated;
+extern crate syn;
 
 // Here we take advantage of the parser function `parse_terminated`
 impl Parse for Block {

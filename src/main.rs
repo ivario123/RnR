@@ -45,14 +45,8 @@ fn main() {
     }
 
     print!("rnr input:\n{}", s);
-    let ts: proc_macro2::TokenStream = s.parse().unwrap();
     print!("rnr parsing: ");
-    let parse: Result<rnr::ast::Prog, _> = parse!(ts);
-    if parse.is_err() {
-        eprintln!("error: {}", parse.err().unwrap());
-        return;
-    }
-    let prog = parse.unwrap();
+    let prog = parse!(s, rnr::ast::Prog);
     println!("\nrnr prog:\n{}", prog);
     let mut type_check_passed = true;
     if opt.type_check {

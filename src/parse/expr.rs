@@ -15,6 +15,7 @@ impl Parse for Expr {
     /// This parser deviates from the rust syntax in that it treats macro invocations
     /// as function calls simply discarding the ! at the end of function identifiers
     fn parse(input: ParseStream) -> Result<Self> {
+        //println!("{:?}", input);
         let left = if input.peek(syn::token::Paren) {
             // we have a left (Expr), e.g., "(1 + 2)"
             let content;
@@ -25,10 +26,13 @@ impl Parse for Expr {
             && (input.peek2(syn::token::Paren)
                 || (input.peek2(Token![!]) && input.peek3(syn::token::Paren)))
         {
+            //println!("Parsing a function call");
             // This is a function call. Now we simply parse the function call and return that.
             let fncall: FuncCall = input.parse()?;
-            return Ok(Expr::FuncCall(fncall));
+            Expr::FuncCall(fncall)
         } else if input.peek(syn::Ident) && input.peek2(syn::token::Bracket) {
+            //println!("Parsing an array in some interpretation of the word");
+
             // This might be a bit hacky
             let left: syn::Ident = input.parse()?;
             let left: Expr = Expr::Ident(left.to_string());
@@ -45,10 +49,12 @@ impl Parse for Expr {
                 Expr::Index(Box::new(left), Box::new(idx))
             }
         } else if input.peek(syn::Ident) {
+            //println!("Parsing an identifier");
             // we have a left Ident, e.g, "my_best_ident_ever"
             let ident: syn::Ident = input.parse()?;
             Expr::Ident(ident.to_string())
         } else if input.peek(syn::token::If) {
+            //println!("Parsing an if statement");
             // we have a left conditional, e.g., "if true {1} else {2}" or
             // if true { 5 }
             let IfThenOptElse(c, t, e) = input.parse()?;
@@ -58,11 +64,13 @@ impl Parse for Expr {
             || input.peek(Token![&])
             || input.peek(Token![*])
         {
+            //println!("Paring a unary op");
             // We have a UnaryOp
             let op: UnaryOp = input.parse()?;
             let operand: Expr = input.parse()?;
-            return Ok(Expr::UnOp(op, Box::new(operand)));
+            Expr::UnOp(op, Box::new(operand))
         } else if input.peek(syn::token::Bracket) {
+            //println!("Parsing an array decleration");
             // This is an array
             let content;
             syn::bracketed!(content in input);
@@ -94,13 +102,16 @@ impl Parse for Expr {
                         .collect()
                 }
             };
-            return Ok(Expr::Array(bl));
+            Expr::Array(bl)
         } else if input.peek(syn::token::Brace) {
+            //println!("Parsing a block");
             let bl: Block = input.parse()?;
-            return Ok(Expr::Block(bl));
+            Expr::Block(bl)
         } else {
+            //println!("This can't be anything but a literal right");
             // else we require a left literal
-            input.parse::<crate::ast::Literal>()?.into()
+            let e: Expr = input.parse::<crate::ast::Literal>()?.into();
+            e
         };
         // now check if right is an Op Expr
         match input.parse::<BinaryOp>() {

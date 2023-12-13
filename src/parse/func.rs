@@ -76,9 +76,11 @@ impl Parse for FuncCall {
         let content;
         syn::parenthesized!(content in input);
         let args = content.parse_terminated(Expr::parse, syn::token::Comma)?;
-        Ok(FuncCall {
+        let ret = FuncCall {
             id: Box::new(ident),
             args: Box::new(args.into_iter().collect()),
-        })
+        };
+        //println!("Parsing for {ret} completed");
+        Ok(ret)
     }
 }

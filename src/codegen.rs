@@ -1,7 +1,7 @@
 // codegen for a simple MIPS 3k in single cycle mode.
 #![allow(dead_code)]
-use crate::ast::BinaryOp;
 use crate::ast::*;
+use crate::{ast::BinaryOp, Ast};
 
 use mips::{
     asm::*,
@@ -134,6 +134,7 @@ fn li(r: Reg, d: u32) -> Instrs {
 // Code generated ensures that result will be at top of stack
 impl Expr {
     fn codegen(&self, env: &mut Env, fns: &mut Instrs) -> Instrs {
+        println!("Generating code for Expr {self:?}");
         match self {
             Expr::Ident(id) => {
                 let offset = env.get_var_offset(id);
@@ -246,6 +247,7 @@ impl Expr {
 
 impl Statement {
     fn codegen(&self, env: &mut Env, fns: &mut Instrs, _n: usize, last_expr: &mut bool) -> Instrs {
+        println!("Generating code for statement {self:?}");
         fn assign(id: &String, e: &Expr, env: &mut Env, fns: &mut Instrs) -> Instrs {
             let mut asm = e.codegen(env, fns);
             asm.append(&mut pop(t0));
@@ -310,8 +312,17 @@ impl Statement {
                 f.codegen(env, fns);
                 Instrs::new()
             }
-            Statement::Block(b) => b.codegen(env, fns, ""),
+            Statement::Block(b) => {
+                *last_expr = true;
+                b.codegen(env, fns, "")
+            }
         }
+    }
+}
+
+impl Ast<Block> {
+    fn codegen(&self, env: &mut Env, fns: &mut Instrs, ns: &str) -> Instrs {
+        self.t.codegen(env, fns, ns)
     }
 }
 
@@ -446,6 +457,8 @@ impl crate::ast::func::Func {
 
 #[cfg(test)]
 mod tests {
+    use crate::parse;
+
     use super::*;
     use mips::{error::Error, vm::Mips};
 
@@ -606,6 +619,7 @@ mod tests {
     fn test_block(block: &str, assert_val: i32) {
         let ts: proc_macro2::TokenStream = block.parse().unwrap();
         let block: Block = syn::parse2(ts).unwrap();
+        println!("Evaluating {block}");
         let mut env = Env::new();
         // start in a new scope
         let mut asm = Instrs::new();
@@ -983,9 +997,9 @@ mod tests {
 
     // helper function to test fn
     fn mips_test_fn(block: &str, assert_val: i32) {
-        let ts: proc_macro2::TokenStream = block.parse().unwrap();
-        let block: Block = syn::parse2(ts).unwrap();
-
+        let block = block.to_string();
+        let block = parse!(block, Block);
+        println!("{block}");
         let mut env = Env::new();
         let fns = &mut Instrs::new();
         let mut asm = Instrs::new();
@@ -1016,7 +1030,7 @@ mod tests {
             "
             {
                 fn a() {
-                }
+                };
 
                 fn b() {
                 }              
@@ -1033,7 +1047,7 @@ mod tests {
             {
                 fn a() -> i32 {
                     42
-                }
+                };
             }
         ",
             0,
@@ -1047,7 +1061,7 @@ mod tests {
             {
                 fn a(x: i32) -> i32 {
                     42 + x
-                }
+                };
             }
         ",
             0,
@@ -1061,7 +1075,7 @@ mod tests {
             {
                 fn a(x: i32, y: i32) -> i32 {
                     42 + x + y
-                }
+                };
             }
         ",
             0,
@@ -1074,7 +1088,7 @@ mod tests {
             "
             {
                 fn a() {
-                }
+                };
 
                 a()
             }
@@ -1090,7 +1104,7 @@ mod tests {
             {
                 fn a() -> i32 {
                     3
-                }
+                };
 
                 a()
             }
@@ -1106,7 +1120,7 @@ mod tests {
             {
                 fn a(x:i32, y: i32) -> i32 {
                     x - y
-                }
+                };
 
                 a(5, 3)
             }
@@ -1123,10 +1137,10 @@ mod tests {
                 fn a() -> i32 {
                     fn b() -> i32 {
                         4
-                    }
+                    };
 
                     b()
-                }
+                };
 
                 a()
             }
@@ -1142,7 +1156,7 @@ mod tests {
             {
                 fn a() -> i32 {
                     3
-                }
+                };
 
                 a()
             }
@@ -1158,11 +1172,11 @@ mod tests {
             {
                 fn a() {
                     3
-                }
+                };
 
                 fn b() {
                     4
-                }
+                };
 
                 a() + b()
             }
@@ -1179,11 +1193,11 @@ mod tests {
             {
                 fn a() {
                     3
-                }
+                };
 
                 fn a() {
                     4
-                }
+                };
 
                 a() 
             }
@@ -1199,11 +1213,11 @@ mod tests {
             {
                 fn b() {
                     4
-                }
+                };
 
                 fn a() -> i32 {
                     3 + 5 + b()
-                }     
+                };     
 
                 a()
             }
@@ -1215,20 +1229,19 @@ mod tests {
     #[test]
     fn mips_test_fn_nested() {
         mips_test_fn(
-            "
-            {
+            "{
                 fn a(x: i32) -> i32 {
 
                     fn b(y: i32) -> i32 {
                         3 + y
-                    }
+                    };
 
                     fn a() -> i32 {
                         5 + b(1)
-                    }
+                    };
 
                     x + b(x + 1) + a()
-                }
+                };
 
                 a(4) 
             }
@@ -1248,7 +1261,7 @@ mod tests {
                     } else {
                         0
                     }
-                }
+                };
 
                 sum(3)
             }
@@ -1264,7 +1277,7 @@ mod tests {
             {
                 fn a(x: i32, y: i32) {
                     x + y
-                }
+                };
 
                 a(3, 4)
             }
@@ -1306,15 +1319,15 @@ mod tests {
                 fn f() -> i32 { // shadowing outer declaration
                     fn g() -> i32 {
                         7
-                    }
+                    };
     
                     g()
-                }
+                };
                 {
                     fn f() {} // defined in local scope
-                }
+                };
                 3 + f()
-            }
+            };
 
             f(3)
         }",
