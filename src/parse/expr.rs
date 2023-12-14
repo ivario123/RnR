@@ -1,6 +1,7 @@
 //! Defines parsing rules for [expressions](crate::ast::Expr)
 //!
-use crate::ast::FuncCall;
+
+use crate::{ast::FuncCall, parse::Peek};
 
 use super::{
     BinaryOp, Block, Expr, Literal, Parse, ParseStream, Result, Statement, Token, UnaryOp,
@@ -49,9 +50,9 @@ impl Parse for Expr {
                 Expr::Index(Box::new(left), Box::new(idx))
             }
         } else if input.peek(syn::Ident) {
-            //println!("Parsing an identifier");
             // we have a left Ident, e.g, "my_best_ident_ever"
             let ident: syn::Ident = input.parse()?;
+            println!("Parsed an identifier {ident}");
             Expr::Ident(ident.to_string())
         } else if input.peek(syn::token::If) {
             //println!("Parsing an if statement");
@@ -59,15 +60,20 @@ impl Parse for Expr {
             // if true { 5 }
             let IfThenOptElse(c, t, e) = input.parse()?;
             Expr::IfThenElse(Box::new(c), t, e)
-        } else if input.peek(Token![-])
-            || input.peek(Token![!])
-            || input.peek(Token![&])
-            || input.peek(Token![*])
-        {
-            println!("Paring a unary op {input:?}");
+        } else if input.peek(Token![*]) && input.peek2(syn::Ident) {
+            let _: Token![*] = input.parse()?;
+            let id: syn::Ident = input.parse()?;
+            Expr::UnOp(UnaryOp::Dereff, Box::new(Expr::Ident(id.to_string())))
+        } else if UnaryOp::peek::<1>(input) {
             // We have a UnaryOp
             let op: UnaryOp = input.parse()?;
-            let operand: Expr = input.parse()?;
+
+            let operand: Expr = if input.peek(syn::Ident) {
+                let id: syn::Ident = input.parse()?;
+                Expr::Ident(id.to_string())
+            } else {
+                input.parse()?
+            };
             return Ok(Expr::UnOp(op, Box::new(operand)));
         } else if input.peek(syn::token::Bracket) {
             //println!("Parsing an array decleration");
@@ -104,23 +110,32 @@ impl Parse for Expr {
             };
             Expr::Array(bl)
         } else if input.peek(syn::token::Brace) {
-            //println!("Parsing a block");
             let bl: Block = input.parse()?;
             Expr::Block(bl)
         } else {
-            //println!("This can't be anything but a literal right");
             // else we require a left literal
             let e: Expr = input.parse::<crate::ast::Literal>()?.into();
             e
         };
         // now check if right is an Op Expr
-        match input.parse::<BinaryOp>() {
-            Ok(op) => {
+        match (BinaryOp::peek::<1>(input), input.peek2(Token![=])) {
+            (true, false) => {
+                let op: BinaryOp = input.parse()?;
                 let right: Expr = input.parse()?;
                 Ok(Expr::BinOp(op, Box::new(left), Box::new(right)))
             }
+            // Cover case where we have expr == expr as this would not be coverd by the previous
+            // test
+            (true, true) => match input.peek(Token![==]) {
+                true => {
+                    let op: BinaryOp = input.parse()?;
+                    let right: Expr = input.parse()?;
+                    Ok(Expr::BinOp(op, Box::new(left), Box::new(right)))
+                }
+                _ => Ok(left),
+            },
             // no op, just return the left, no error
-            Err(_) => Ok(left),
+            _ => Ok(left),
         }
     }
 }

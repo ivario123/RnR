@@ -1,5 +1,5 @@
 use super::{Operation, TypeEnv, TypeErr};
-use crate::ast::{Expr, Literal, Type, UnaryOp};
+use crate::ast::{Expr, Literal, Ref, Type, UnaryOp};
 
 impl super::TypeCheck for Expr {
     type ReturnType = Type;
@@ -75,9 +75,17 @@ impl super::TypeCheck for Expr {
                 // At this time I don not want to allow borrowing of intermediate values, these
                 // should simply be stored in a temporary variable.
                 let id = match *e.clone() {
-                    Expr::Ident(i) => Ok(i),
-                    e => Err(format!("Cannot treat {e} as an identifier")),
-                }?;
+                    Expr::Ident(i) => i,
+                    e => {
+                        // Otherwise we borrow a simple stack allocated value.
+                        // This will be introuced at this point in the code.
+
+                        return Ok(Type::MutRef(Ref(
+                            Box::new(e.check(env, env.len() - 1)?),
+                            idx,
+                        )));
+                    }
+                };
                 let mut last_idx = env.len();
                 let mut meta = None;
                 while let Some(idx) = last_idx.checked_sub(1) {

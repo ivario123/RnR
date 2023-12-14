@@ -1,4 +1,4 @@
-use super::{BinaryOp, Parse, ParseStream, Result, Token, UnaryOp};
+use super::{BinaryOp, Parse, ParseStream, Peek, Result, Token, UnaryOp};
 
 impl super::Peek for BinaryOp {
     fn peek<const DIST: usize>(input: ParseStream) -> bool {
@@ -52,7 +52,16 @@ impl Parse for BinaryOp {
         }
     }
 }
-
+impl Peek for UnaryOp {
+    fn peek<const DIST: usize>(input: ParseStream) -> bool {
+        // check if next token is `+`
+        Self::peek_buffer(input, Token![!], DIST)
+            || Self::peek_buffer(input, Token![-], DIST)
+            || Self::peek_buffer(input, Token![+], DIST)
+            || Self::peek_buffer(input, Token![&], DIST)
+            || Self::peek_buffer(input, Token![*], DIST)
+    }
+}
 impl Parse for UnaryOp {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.peek(Token![!]) {
@@ -70,6 +79,7 @@ impl Parse for UnaryOp {
                 Ok(UnaryOp::Borrow)
             }
         } else if input.peek(Token![*]) {
+            let _: Token![*] = input.parse()?;
             Ok(UnaryOp::Dereff)
         } else {
             // to explicitly create an error at the current position

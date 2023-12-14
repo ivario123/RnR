@@ -87,7 +87,23 @@ impl super::Eval for Expr {
                     let scope = scope.unwrap();
                     Ok(Values::Ref((i, scope as usize)))
                 }
-                e => Err(VmErr::Err(format!("Cannot borrow {e} mutably"))),
+                e => {
+                    // Evaluate the expression push a new invalid identifier on to the stack and
+                    // then we have our reff.
+                    let val = e.eval(env, env.len() - 1, max_iter, iter_counter)?;
+                    let mut counter: i32 = 0;
+                    let id = |counter| format!("{counter}_borrow");
+                    let local_scope = &mut env.get_mut(scope).unwrap().0;
+                    while let Some(_) = local_scope.get(&id(counter)) {
+                        match counter.checked_add(1) {
+                            Some(c) => counter = c,
+                            _ => return Err(VmErr::Err(format!("Cannot borrow more literals."))),
+                        };
+                    }
+                    let meta = ValueMeta { value: Some(val) };
+                    local_scope.insert(id(counter), meta);
+                    Ok(Values::Ref((id(counter), scope)))
+                } //Err(VmErr::Err(format!("Cannot borrow {e} mutably"))),
             },
             Expr::UnOp(UnaryOp::Dereff, e) => {
                 let meta = e.eval(env, env.len() - 1, max_iter, iter_counter)?;

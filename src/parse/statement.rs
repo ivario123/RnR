@@ -31,7 +31,8 @@ fn parse_let(input: ParseStream) -> Result<Statement> {
     let right: Option<Expr> = match input.peek(Token![=]) {
         true => {
             let _: Token![=] = input.parse()?;
-            Some(input.parse()?)
+            let rhs = input.parse()?;
+            Some(rhs)
         }
         _ => None,
     };
@@ -46,8 +47,12 @@ impl Statement {
             Ok(Statement::FnDecleration(func))
         } else if input.peek(syn::token::While) {
             let _while: syn::token::While = input.parse()?;
+
             let condition: Expr = input.parse()?;
+            println!("Parsed while {condition}");
+            println!("Trying to parse {input:?} as a block");
             let block: Block = input.parse()?;
+
             Ok(Statement::While(condition, block))
         } else if input.peek(syn::token::Brace) {
             let block: Block = input.parse()?;
@@ -71,12 +76,26 @@ impl Statement {
             return Ok(Statement::Assign(id, rhs));
         } else {
             let left = if input.peek(Token![*]) {
-                let _: Token![*] = input.parse()?;
-                let left: syn::Ident = input.parse()?;
-                Expr::UnOp(
-                    crate::ast::UnaryOp::Dereff,
-                    Box::new(Expr::Ident(left.to_string())),
-                )
+                let left: Expr = input.parse()?;
+                if BinaryOp::peek::<1>(input) && input.peek2(Token![=]) {
+                    // We have to check if it is add assign or such first
+                    let id = left;
+                    let op: BinaryOp = input.parse()?;
+                    let _: Token![=] = input.parse()?;
+                    let rhs = input.parse()?;
+                    let rhs = Expr::BinOp(op, Box::new(id.clone()), Box::new(rhs));
+
+                    return Ok(Statement::Assign(id, rhs));
+                } else {
+                    left
+                } /*
+                  #[allow(unreachable_code)]
+                  let _: Token![*] = input.parse()?;
+                  let left: syn::Ident = input.parse()?;
+                  Expr::UnOp(
+                      crate::ast::UnaryOp::Dereff,
+                      Box::new(Expr::Ident(left.to_string())),
+                  )*/
             } else {
                 let left: Expr = input.parse()?;
                 left
