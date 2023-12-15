@@ -6,6 +6,7 @@ stages:
     script:
       - curl https://sh.rustup.rs -sSf | sh -s -- -y
       - source "$HOME/.cargo/env"
+      - chmod +x ./setup.bash
 tests:
   only:
     changes:
@@ -29,7 +30,7 @@ example_tests:
   stage: test
   image: rust:latest
   script:
-    - ./setup.bash
+        - ./setup.bash
         - ./test.bash 
 
 
