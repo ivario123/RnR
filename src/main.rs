@@ -88,7 +88,6 @@ fn main() {
     let _target = opt.target.unwrap();
     let output = opt.output_file;
     let asm = prog.codegen();
-    println!("{asm}");
     if opt.asm_sim {
         let mut vm = mips::vm::Mips::new(asm.clone());
         let _ = vm.run();
@@ -108,4 +107,5 @@ fn main() {
     };
     let plain_bytes = strip_ansi_escapes::strip(format!("{asm}").as_bytes());
     file.write_all(&plain_bytes).unwrap();
+    println!("Done! :)")
 }

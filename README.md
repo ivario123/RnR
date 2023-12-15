@@ -12,10 +12,16 @@ Optionally (towards higher grades) you can:
 
 - Life-time/scoping analysis, to ensure that all references goes to current (or outer) scope(s). (Easy.)
 
+Propper life times are not implemented, all lifetime patterns asside from reasignment are supported.
+
 - Mutability analysis, ensuring that mutations are only allowed for mutable data (even through references). (Moderately complex.)
   
+This is done.
+
 - Aliasing analysis, ensuring that illegal borrows are rejected by implementing a borrow checker (`bc.rs`). (Hard.)
   
+This is done, the only limitation here is, again, the lack of support for reasignment checks. 
+
 You will also learn how a command line interface (cli) can be easily added to your application, allowing your compiler to be run directly from your terminal. (You can install your compiler `cargo install --path .`, and run it as `rnr --help`. You can change the name of the application in the `Cargo.toml` file.
 
 ---
@@ -40,23 +46,15 @@ Data structures:
   
 - `parse.rs`, the parser.
 
-API:s:
-
-- `error.rs`, the definition of the error type.
-
-- `common.rs`, common API for processing the AST.
-
-- `env.rs`, a generic stacked environment for interpretation and semantic analysis.
-  
 Analysis:
 
-- `type_check.rs`, the type checker.
+- `type_check.rs`, the type checker which also implements the borrow checker.
 
-- `bc.rs`, the optional borrow checker.
   
 Interpretation:
 
 - `vm.rs`, an AST level interpreter for the natural semantics.
+- `codegen.rs`, generates code for the target. At the time of writing this is limited to the mips architchture
 
 CLI:
 

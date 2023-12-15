@@ -1,21 +1,13 @@
 //! Defines parsing rules for [expressions](crate::ast::Expr)
 //!
 
-use crate::{ast::FuncCall, parse::Peek};
+use crate::{ast::FuncCall, climb::climb, parse::Peek};
 
 use super::{
     BinaryOp, Block, Expr, Literal, Parse, ParseStream, Result, Statement, Token, UnaryOp,
 };
-
-// Render a "right associative" AST
-impl Parse for Expr {
-    /// Parses the input stream in to an [expression](Expr)
-    ///
-    /// ## Deviations from rust syntax
-    ///
-    /// This parser deviates from the rust syntax in that it treats macro invocations
-    /// as function calls simply discarding the ! at the end of function identifiers
-    fn parse(input: ParseStream) -> Result<Self> {
+impl Expr {
+    fn parse_internal(input: ParseStream) -> Result<Self> {
         //println!("{:?}", input);
         let left = if input.peek(syn::token::Paren) {
             // we have a left (Expr), e.g., "(1 + 2)"
@@ -137,6 +129,20 @@ impl Parse for Expr {
             // no op, just return the left, no error
             _ => Ok(left),
         }
+    }
+}
+// Render a "right associative" AST
+impl Parse for Expr {
+    /// Parses the input stream in to an [expression](Expr)
+    ///
+    /// ## Deviations from rust syntax
+    ///
+    /// This parser deviates from the rust syntax in that it treats macro invocations
+    /// as function calls simply discarding the ! at the end of function identifiers
+    fn parse(input: ParseStream) -> Result<Self> {
+        let exp = Self::parse_internal(input)?;
+
+        Ok(climb(exp))
     }
 }
 

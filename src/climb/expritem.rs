@@ -36,6 +36,8 @@ pub enum ExprItems {
     UnOp(UnaryOp),
     Lit(Literal),
     Par(Vec<ExprItems>),
+    Ident(String),
+    Array((Vec<ExprItems>, usize)),
 }
 
 impl<'a> TryInto<&'a BinaryOp> for &'a ExprItems {

@@ -87,6 +87,21 @@ impl Expr {
     pub fn bin_op(o: BinaryOp, left: Expr, right: Expr) -> Self {
         Expr::BinOp(o, Box::new(left), Box::new(right))
     }
+    pub fn needs_climbing(&self) -> bool {
+        match self {
+            Expr::Ident(_) => false,
+            Expr::Lit(_) => false,
+            Expr::BinOp(_, _, _) => true,
+            Expr::UnOp(_, _) => true,
+            Expr::Par(_) => true,
+            Expr::IfThenElse(_, _, _) => false,
+            Expr::Array(_) => true,
+            Expr::Index(_, _) => false,
+            Expr::IndexMut(_, _) => false,
+            Expr::FuncCall(_) => false,
+            Expr::Block(_) => false,
+        }
+    }
 }
 
 impl From<Literal> for Expr {

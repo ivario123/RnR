@@ -75,8 +75,16 @@ fn to_vec(e: Expr) -> Vec<ExprItems> {
             ret
         }
         Par(block) => vec![ExprItems::Par(to_vec(*block))],
-        // not yet implemented
-        _ => unimplemented!(),
+        Ident(i) => vec![ExprItems::Ident(i)],
+        Array(els) => {
+            let len = els.len();
+            let mut exprs: Vec<ExprItems> = vec![];
+            for el in els {
+                exprs.append(&mut to_vec(*el));
+            }
+            vec![ExprItems::Array((exprs, len))]
+        }
+        _ => todo!(),
     }
 }
 
@@ -170,6 +178,10 @@ fn expr(scanner: &mut Scanner) -> Expr {
 
 // A trampoline to start of the precedence climbing
 pub fn climb(e: Expr) -> Expr {
+    let e = match e.needs_climbing() {
+        false => return e,
+        true => e,
+    };
     // flatten the Expr into a vector
     let v: Vec<ExprItems> = to_vec(e);
     // turn the vector into a Scanner
