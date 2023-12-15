@@ -109,7 +109,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: false,
-                shadowable: false,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -130,6 +130,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: true,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));

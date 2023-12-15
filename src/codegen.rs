@@ -255,7 +255,6 @@ impl Expr {
                 bin_op_asm.append(&mut push(t0));
                 bin_op_asm.comment(&format!("op {}", op))
             }
-            Expr::UnOp(_, _) => todo!(),
             Expr::Par(e) => e.codegen(env, fns),
             Expr::FuncCall(call) => {
                 let (id, args) = (call.id.clone(), call.args.clone());
@@ -308,6 +307,36 @@ impl Expr {
                 ite_asm
             }
             Expr::Block(b) => b.codegen(env, fns, "expr"),
+            // Since we assume type checking has been done before this we simply
+            // treat mut an imutable borrows equally
+            #[allow(unreachable_code, unused_variables)]
+            Expr::UnOp(UnaryOp::Borrow, expr) | Expr::UnOp(UnaryOp::BorrowMut, expr) => {
+                todo!();
+                let mut asm = Instrs::new();
+
+                let id = match *expr.clone() {
+                    Expr::Ident(id) => id,
+                    e => {
+                        let mut id = 0;
+                        while let Some(_) = env.get_var(&format!("{id}_borrow")) {
+                            id += 1;
+                        }
+                        let mut stmt = Statement::Let(
+                            Expr::Ident(format!("{id}_borrow")),
+                            true,
+                            Some(Type::Unit),
+                            Some(e),
+                        )
+                        .codegen(env, fns, 0, &mut true);
+
+                        asm.append(&mut stmt);
+                        format!("{id}_borrow")
+                    }
+                };
+                let meta = env.get_var_offset(&id);
+                asm.append(&mut li(t0, meta as u32));
+                asm
+            }
             _ => todo!(),
         }
     }
