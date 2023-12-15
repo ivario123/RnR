@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::codegen::CodeGen;
+
 pub trait Prio {
     fn prio(&self) -> usize {
         0
@@ -7,7 +9,11 @@ pub trait Prio {
 }
 
 pub trait TopLevel:
-    crate::vm::Eval + crate::type_check::TypeCheck<ReturnType = crate::ast::Type> + Display + Prio
+    crate::vm::Eval
+    + crate::type_check::TypeCheck<ReturnType = crate::ast::Type>
+    + Display
+    + Prio
+    + CodeGen
 {
     fn is_main(&self) -> bool;
 }

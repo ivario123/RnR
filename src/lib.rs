@@ -69,7 +69,6 @@ impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
                 let lines = map(
                     value
                         .lines()
-                        .into_iter()
                         .map(|el| el.to_string())
                         .collect::<Vec<String>>(),
                     line - 4..line + 5,
@@ -87,7 +86,6 @@ impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
                 let lines = map(
                     value
                         .lines()
-                        .into_iter()
                         .map(|el| el.to_string())
                         .collect::<Vec<String>>(),
                     line - 4..line + 5,

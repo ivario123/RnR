@@ -10,6 +10,20 @@ use mips::{
 };
 
 use std::collections::{HashMap, VecDeque};
+use std::str::FromStr;
+#[derive(Debug)]
+pub enum CompileTarget {
+    Mips,
+}
+impl FromStr for CompileTarget {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "mips" => Ok(Self::Mips),
+            s => Err(format!("{s} is not a valid identifier")),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 enum Target {
@@ -22,7 +36,7 @@ fn name_space_n(block_number: usize, block_type: &str) -> String {
 }
 
 #[derive(Debug, Clone)]
-struct Env {
+pub struct Env {
     offset: i16,
     // (name_space, HashMap)
     scope: VecDeque<(String, HashMap<String, Target>)>,
@@ -61,10 +75,18 @@ impl Env {
     }
 
     fn insert_fn(&mut self, id: &str) {
-        if self.scope[0].1.contains_key(id) {
+        println!("{self:?},{id}");
+        let scope = match self.scope.get_mut(0) {
+            Some(scope) => scope,
+            None => {
+                self.push_scope("GLOBAL_SCOPE");
+                self.scope.get_mut(0).unwrap()
+            }
+        };
+        if scope.1.contains_key(id) {
             panic!("fn `{}` already defined in scope", id)
         } else {
-            self.scope[0].1.insert(id.to_owned(), Target::Fn);
+            scope.1.insert(id.to_owned(), Target::Fn);
         }
     }
 
@@ -128,6 +150,36 @@ fn li(r: Reg, d: u32) -> Instrs {
     match imm as u32 == d {
         true => Instrs(vec![ori(r, zero, imm)]).comment("16 bit constant"),
         false => Instrs(vec![lui(t0, (d >> 16) as u16), ori(t0, t0, imm)]),
+    }
+}
+impl Ast<Prog> {
+    pub fn codegen(&self) -> Instrs {
+        let mut env = Env::new();
+        let mut asm = Instrs::new();
+        asm.push(mov(fp, sp).comment("move sp to frame pointer"));
+        let mut code = self.t.codegen(&mut env);
+        asm.append(&mut code);
+        asm.push(halt());
+        asm
+    }
+}
+impl Prog {
+    fn codegen(&self, env: &mut Env) -> Instrs {
+        let statements = &self.statements;
+        let mut fns = Instrs::new();
+        println!("statements {statements:?} ");
+
+        for statement in statements.iter() {
+            statement.codegen(env, &mut fns)
+        }
+        let entry_point = Expr::FuncCall(FuncCall {
+            id: Box::new(Expr::Ident("main".to_string())),
+            args: Box::<Vec<Expr>>::default(),
+        });
+        let mut entry_point = entry_point.codegen(env, &mut Instrs::new());
+        entry_point.push(halt().comment("Main exit"));
+        entry_point.append(&mut fns);
+        entry_point
     }
 }
 
@@ -383,6 +435,9 @@ impl Block {
         }
     }
 }
+pub trait CodeGen {
+    fn codegen(&self, env: &mut Env, fns: &mut Instrs);
+}
 
 impl crate::ast::func::Func {
     fn enter(&self) -> Instrs {
@@ -404,7 +459,8 @@ impl crate::ast::func::Func {
         asm.push(jr(ra)); //
         asm.comment(&format!("exit frame 'fn {}'", self.id))
     }
-
+}
+impl CodeGen for Func {
     // stack frame layout
     //
     // 16[fp]    arg 1
@@ -509,6 +565,34 @@ mod tests {
         let mut mips = Mips::new(Instrs::new_from_slice(&asm));
         let r = mips.run();
         assert_eq!(r, Err(Error::Halt));
+    }
+    #[test]
+    fn test_simple_program() {
+        mips_test_prog(
+            "
+fn a() -> i32{
+    2
+}
+fn main(){
+    a();
+}
+",
+        )
+    }
+
+    // helper to test expressions
+    fn mips_test_prog(prog: &str) {
+        let prog: Ast<Prog> = prog.to_string().into();
+        let asm = prog.codegen();
+        println!("codegen\n{}", asm);
+        let mut mips = Mips::new(Instrs::new_from_slice(&asm));
+        let _ = mips.run();
+        let t0_v = mips.rf.get(t0) as i32;
+        println!("e {}", t0_v);
+        assert_eq!(t0_v, 0);
+        let sp_v = mips.rf.get(sp);
+        println!("sp {:x}", sp_v);
+        assert_eq!(sp_v, 0x7fff_fffc);
     }
 
     // helper to test expressions

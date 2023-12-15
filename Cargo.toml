@@ -10,6 +10,7 @@ regex = "1.10.2"
 structopt = "0.3.26"
 ansi_term = "0.12.1"
 mips = { path = "../mips" }
+strip-ansi-escapes = "0.2.0"
 
 [dependencies.syn]
 features = ["full", "extra-traits"]

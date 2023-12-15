@@ -73,7 +73,7 @@ impl super::Eval for Expr {
                 Expr::Ident(i) => {
                     let mut last_scope = env.len();
                     let mut scope = None;
-                    while let Some(_) = last_scope.checked_sub(1) {
+                    while last_scope.checked_sub(1).is_some() {
                         last_scope -= 1;
                         let res = env.get(last_scope).unwrap().0.get(&i);
                         if res.is_some() {
@@ -85,7 +85,7 @@ impl super::Eval for Expr {
                         return Err(VmErr::Err(format!("Cannot find identifier {i}")));
                     }
                     let scope = scope.unwrap();
-                    Ok(Values::Ref((i, scope as usize)))
+                    Ok(Values::Ref((i, scope)))
                 }
                 e => {
                     // Evaluate the expression push a new invalid identifier on to the stack and
@@ -94,10 +94,10 @@ impl super::Eval for Expr {
                     let mut counter: i32 = 0;
                     let id = |counter| format!("{counter}_borrow");
                     let local_scope = &mut env.get_mut(scope).unwrap().0;
-                    while let Some(_) = local_scope.get(&id(counter)) {
+                    while local_scope.get(&id(counter)).is_some() {
                         match counter.checked_add(1) {
                             Some(c) => counter = c,
-                            _ => return Err(VmErr::Err(format!("Cannot borrow more literals."))),
+                            _ => return Err(VmErr::Err("Cannot borrow more literals.".to_string())),
                         };
                     }
                     let meta = ValueMeta { value: Some(val) };
@@ -120,7 +120,7 @@ impl super::Eval for Expr {
                 match target_env.0.get(&id) {
                     Some(meta) => match &meta.value {
                         Some(value) => Ok(value.clone()),
-                        _ => Err(VmErr::Err(format!("Cannot derreference unassigned value"))),
+                        _ => Err(VmErr::Err("Cannot derreference unassigned value".to_string())),
                     },
                     _ => Err(VmErr::Err(format!("Invalid refference {self}"))),
                 }
@@ -384,21 +384,16 @@ impl Expr {
                         };
                         match scope.0.get(&id) {
                             Some(meta) => {
-                                match meta.value {
-                                    Some(Values::Ref(_)) => {
-                                        return Err(VmErr::Err(format!(
-                                            "Cannot assign to a refference"
-                                        )))
-                                    }
-                                    _ => {}
+                                if let Some(Values::Ref(_)) = meta.value {
+                                    return Err(VmErr::Err("Cannot assign to a refference".to_string()))
                                 };
                             }
                             _ => return Err(VmErr::Err(format!("Cannot find identifier {id}"))),
                         };
-                        (*(scope.0.get_mut(&id).unwrap())).value = Some(value);
+                        (scope.0.get_mut(&id).unwrap()).value = Some(value);
                         Ok(())
                     }
-                    e => return Err(VmErr::Err(format!("Cannot derreference {e}"))),
+                    e => Err(VmErr::Err(format!("Cannot derreference {e}"))),
                 }
             }
             expr => Err(VmErr::Err(format!(

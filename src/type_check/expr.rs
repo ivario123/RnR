@@ -8,7 +8,7 @@ impl super::TypeCheck for Expr {
     // on success: the expression type is returned
     // on failure, an expression type error is returned
     fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
-        if env.len() < idx || env.len() == 0 {
+        if env.len() < idx || env.is_empty() {
             return Err("No scope decleared".to_owned());
         }
         let ret = match self.clone() {

@@ -1,10 +1,11 @@
-use rnr::prelude::*;
-use rnr::{check, eval, parse};
+use rnr::codegen::CompileTarget;
+use rnr::{check, eval};
+use rnr::{prelude::*};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
-
+extern crate strip_ansi_escapes;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rnr", about = "RNR Rust In Rust - Let's Rock'n Roll")]
 struct Opt {
@@ -23,6 +24,12 @@ struct Opt {
     /// Maximum number of statements to execute
     #[structopt(short, long, default_value = "100")]
     max_iter: usize,
+
+    #[structopt(short, long)]
+    target: Option<CompileTarget>,
+
+    #[structopt(short, long, default_value = "")]
+    output_file: String,
 }
 
 fn main() {
@@ -46,7 +53,7 @@ fn main() {
 
     print!("rnr input:\n{}", s);
     print!("rnr parsing: ");
-    let prog = parse!(s, rnr::ast::Prog);
+    let prog: Ast<Prog> = s.into();
     println!("\nrnr prog:\n{}", prog);
     let mut type_check_passed = true;
     if opt.type_check {
@@ -55,7 +62,8 @@ fn main() {
             Ok(_) => println!("passed"),
             Err(err) => {
                 type_check_passed = false;
-                eprintln!("error: {}", err)
+                eprintln!("error: {}", err);
+                return;
             }
         }
     }
@@ -65,7 +73,32 @@ fn main() {
         let iter = opt.max_iter;
         match eval!(prog, iter) {
             Ok(_) => println!("rnr evaluating done"),
-            Err(err) => eprintln!("error: {}", err),
+            Err(err) => {
+                eprintln!("error: {}", err);
+                return;
+            }
         }
     }
+
+    if opt.target.is_none() {
+        return;
+    }
+
+    let _target = opt.target.unwrap();
+    let output = opt.output_file;
+    let asm = prog.codegen();
+    println!("{asm}");
+    let mut file = match File::options()
+        .write(true)
+        .create(true)
+        .open(output.clone())
+    {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Cannot open file {output} in write mode, error {e}");
+            return;
+        }
+    };
+    let plain_bytes = strip_ansi_escapes::strip(format!("{asm}").as_bytes());
+    file.write(&plain_bytes).unwrap();
 }
