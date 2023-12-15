@@ -13,10 +13,10 @@ pub enum Type {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Ref(pub Box<Type>, pub usize);
+pub struct Ref(pub Box<Type>, pub usize, pub usize);
 
 impl From<Type> for Ref {
     fn from(value: Type) -> Self {
-        Ref(Box::new(value), 0)
+        Ref(Box::new(value), 0, 0)
     }
 }

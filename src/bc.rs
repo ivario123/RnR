@@ -1,3 +1,5 @@
+// This file is deprecrated as this functionality is handled by the type checker.
+
 use crate::ast::{program::Prog, types::Ref, Block, Expr, Func as FnDeclaration};
 use crate::common::Eval;
 //use crate::env::{Env, Ref};

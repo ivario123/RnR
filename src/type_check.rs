@@ -16,13 +16,17 @@ pub use op::*;
 pub use program::*;
 pub use statement::*;
 
-use crate::ast::{Func, Type};
+use crate::ast::{Expr, Func, Type};
 
 use std::collections::HashMap;
 
 // So let's implement a type checker
 // Here we go!!!!
-
+#[derive(Debug, Clone, Copy)]
+pub enum Ref {
+    Mutable,
+    Immutable(usize),
+}
 /// Describes all of the needed data for a value.
 #[derive(Debug, Clone)]
 pub struct ValueMeta {
@@ -30,6 +34,7 @@ pub struct ValueMeta {
     assigned: bool,
     mutable: bool,
     shadowable: bool,
+    ref_counter: Option<Ref>,
 }
 #[derive(Debug, Clone)]
 pub struct FunctionMeta {
@@ -68,6 +73,21 @@ impl From<Func> for FunctionMeta {
             .collect();
         Self { ty, args }
     }
+}
+
+fn get_meta<'a>(env: &'a mut TypeEnv, expr: &Expr) -> Result<Option<&'a mut ValueMeta>, TypeErr> {
+    let id = match expr {
+        Expr::Ident(i) => Ok(i),
+        e => Err(format!("Cannot treat {e} as an identifer")),
+    }?;
+    let mut scope = env.len() - 1;
+    while let None = env.get(scope).unwrap().0.get(id) {
+        if scope == 0 {
+            return Ok(None);
+        }
+        scope -= 1;
+    }
+    Ok(env.get_mut(scope).unwrap().0.get_mut(id))
 }
 
 #[cfg(test)]
@@ -110,6 +130,7 @@ mod test {
                 assigned: false,
                 mutable: false,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -131,6 +152,7 @@ mod test {
                 assigned: false,
                 mutable: true,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -152,6 +174,7 @@ mod test {
                 assigned: false,
                 mutable: true,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -173,6 +196,7 @@ mod test {
                 assigned: false,
                 mutable: true,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -200,6 +224,7 @@ mod test {
                 assigned: false,
                 mutable: false,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -236,6 +261,7 @@ mod test {
                 assigned: false,
                 mutable: false,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -256,6 +282,7 @@ mod test {
                 assigned: false,
                 mutable: false,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -289,6 +316,7 @@ mod test {
                 assigned: false,
                 mutable: false,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));
@@ -315,6 +343,7 @@ mod test {
                 assigned: false,
                 mutable: false,
                 shadowable: true,
+                ref_counter: None,
             },
         );
         env.push((scope, HashMap::new()));

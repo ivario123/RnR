@@ -331,9 +331,9 @@ impl fmt::Display for Type {
             Type::Unit => ty("()".to_owned()),
             Type::Usize => ty("usize".to_owned()),
             Type::Array(typ, size) => format!("[{};{size}]", ty(typ.to_string())),
-            Type::Ref(crate::ast::types::Ref(ty, _)) => format!("& {ty}"),
+            Type::Ref(crate::ast::types::Ref(ty, _, _)) => format!("& {ty}"),
             Type::String => ty("String".to_string()),
-            Type::MutRef(crate::ast::types::Ref(ty, _)) => format!("&mut {ty}"),
+            Type::MutRef(crate::ast::types::Ref(ty, _, _)) => format!("&mut {ty}"),
         };
         write!(f, "{}", s)
     }

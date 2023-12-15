@@ -38,8 +38,8 @@ impl Operation for UnaryOp {
             Self::Borrow => Ok(super::Type::Ref(operands.into())),
             Self::BorrowMut => Ok(super::Type::MutRef(operands.into())),
             Self::Dereff => match operands {
-                super::Type::Ref(crate::ast::types::Ref(ty, _)) => Ok(*ty),
-                super::Type::MutRef(crate::ast::types::Ref(ty, _)) => Ok(*ty),
+                super::Type::Ref(crate::ast::types::Ref(ty, _, _)) => Ok(*ty),
+                super::Type::MutRef(crate::ast::types::Ref(ty, _, _)) => Ok(*ty),
                 ty => Err(format!("Cannot treat {} as a refference", ty)),
             },
         }

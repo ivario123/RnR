@@ -33,11 +33,13 @@ impl super::TypeCheck for Statement {
                     (Some(t), None) => Ok(Some(t)),
                     (None, None) => Ok(None),
                 }?;
+
                 let meta = ValueMeta {
                     assigned,
                     ty,
                     mutable,
                     shadowable: true,
+                    ref_counter: None,
                 };
                 let id = match id {
                     Expr::Ident(i) => i,
@@ -46,7 +48,7 @@ impl super::TypeCheck for Statement {
                 for env in env.iter().rev() {
                     if let Some(val) = env.0.get(&id) {
                         if !val.shadowable {
-                            return Err(format!("{self} cannot shaddow static {id}"));
+                            return Err(format!("{self} cannot shadow static {id}"));
                         }
                     }
                 }
@@ -102,7 +104,7 @@ impl super::TypeCheck for Statement {
 
                         let ty = e.check(env, env.len() - 1)?;
                         match ty {
-                            Type::MutRef(crate::ast::types::Ref(ty, _)) => Ok((id, Some(*ty))),
+                            Type::MutRef(crate::ast::types::Ref(ty, _, _)) => Ok((id, Some(*ty))),
                             e => Err(format!("Cannot treat {e} as a mutable borrow")),
                         }
                     }

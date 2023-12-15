@@ -23,6 +23,7 @@ impl TypeCheck for Static {
                 assigned: true,
                 mutable: self.mutable,
                 shadowable: false,
+                ref_counter: None,
             },
         );
         Ok(Type::Unit)

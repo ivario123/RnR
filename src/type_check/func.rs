@@ -11,6 +11,7 @@ impl From<Arg> for ValueMeta {
             assigned: true,
             mutable: value.mutable,
             shadowable: true,
+            ref_counter: None,
         }
     }
 }

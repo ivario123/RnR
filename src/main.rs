@@ -30,6 +30,9 @@ struct Opt {
 
     #[structopt(short, long, default_value = "")]
     output_file: String,
+
+    #[structopt(short, long)]
+    asm_sim: bool,
 }
 
 fn main() {
@@ -86,6 +89,12 @@ fn main() {
     let output = opt.output_file;
     let asm = prog.codegen();
     println!("{asm}");
+    if opt.asm_sim {
+        let mut vm = mips::vm::Mips::new(asm.clone());
+        let _ = vm.run();
+        let to_v = vm.rf.get(mips::rf::Reg::t0) as i32;
+        println!("Return value from emulation : {:?}", to_v);
+    }
     let mut file = match File::options()
         .write(true)
         .create(true)
