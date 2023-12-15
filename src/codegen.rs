@@ -59,7 +59,7 @@ impl Env {
 
     // returns true if id already in current scope
     fn push_var(&mut self, id: &str) -> bool {
-        if self.scope.len() == 0 {
+        if self.scope.is_empty() {
             self.scope
                 .push_front(("GLOBAL_SCOPE".to_string(), HashMap::new()))
         }
@@ -79,7 +79,6 @@ impl Env {
     }
 
     fn insert_fn(&mut self, id: &str) {
-        println!("{self:?},{id}");
         let scope = match self.scope.get_mut(0) {
             Some(scope) => scope,
             None => {
@@ -171,7 +170,6 @@ impl Prog {
     fn codegen(&self, env: &mut Env) -> Instrs {
         let statements = &self.statements;
         let mut fns = Instrs::new();
-        println!("statements {statements:?} ");
 
         for statement in statements.iter() {
             statement.codegen(env, &mut fns)
@@ -202,7 +200,6 @@ impl CodeGen for Static {
 // Code generated ensures that result will be at top of stack
 impl Expr {
     fn codegen(&self, env: &mut Env, fns: &mut Instrs) -> Instrs {
-        println!("Generating code for Expr {self:?}");
         match self {
             Expr::Ident(id) => {
                 let offset = env.get_var_offset(id);
@@ -262,7 +259,6 @@ impl Expr {
                     Expr::Ident(i) => i,
                     _ => unreachable!(),
                 };
-                println!("call {}, args {:?}", id, args);
                 let mut call_asm = Instrs::new();
 
                 for arg in args.iter() {
@@ -270,7 +266,6 @@ impl Expr {
                 }
                 match env.get_fn(&id) {
                     Some(ns) => {
-                        println!("fn {} ns found in {}", id, ns);
                         call_asm.push(bal_label(&ns).comment(&format!("call {}", id)));
                         if !args.is_empty() {
                             // remove arguments
@@ -318,7 +313,7 @@ impl Expr {
                     Expr::Ident(id) => id,
                     e => {
                         let mut id = 0;
-                        while let Some(_) = env.get_var(&format!("{id}_borrow")) {
+                        while env.get_var(&format!("{id}_borrow")).is_some() {
                             id += 1;
                         }
                         let mut stmt = Statement::Let(
@@ -344,7 +339,6 @@ impl Expr {
 
 impl Statement {
     fn codegen(&self, env: &mut Env, fns: &mut Instrs, _n: usize, last_expr: &mut bool) -> Instrs {
-        println!("Generating code for statement {self:?}");
         fn assign(id: &String, e: &Expr, env: &mut Env, fns: &mut Instrs) -> Instrs {
             let mut asm = e.codegen(env, fns);
             asm.append(&mut pop(t0));
@@ -425,7 +419,6 @@ impl Ast<Block> {
 
 impl Block {
     fn codegen(&self, env: &mut Env, fns: &mut Instrs, ns: &str) -> Instrs {
-        println!("enter block: offset {}, scope {}", env.offset, ns);
         //
         // When exiting the block, all locals should be gone
         // The top of the stack will contain the block return value
@@ -459,10 +452,6 @@ impl Block {
                 stmts_asm.append(&mut li(t0, 0).comment("exit block semi, () return value"));
                 stmts_asm.append(&mut push(t0));
             }
-            println!(
-                "exit block: block_offset {}, current_offset {}",
-                enter_offset, env.offset
-            );
 
             if enter_offset != env.offset {
                 // we have local variables
@@ -517,7 +506,6 @@ impl CodeGen for Func {
     // -8[fp]    local 2, etc.
 
     fn codegen(&self, env: &mut Env, fns: &mut Instrs) {
-        println!("fn codegen, id {}", self.id);
         let id = match self.id.clone() {
             Expr::Ident(i) => i,
             _ => unreachable!(),

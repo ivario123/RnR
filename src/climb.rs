@@ -66,7 +66,10 @@ fn to_vec(e: Expr) -> Vec<ExprItems> {
                     ret.extend(r);
                     ret
                 }
-                _ => unreachable!(),
+                e => {
+                    r.append(&mut to_vec(e));
+                    r
+                }
             }
         }
         UnOp(op, operand) => {
@@ -84,7 +87,9 @@ fn to_vec(e: Expr) -> Vec<ExprItems> {
             }
             vec![ExprItems::Array((exprs, len))]
         }
-        _ => todo!(),
+        e => {
+            vec![ExprItems::Expr(e)]
+        }
     }
 }
 
@@ -133,7 +138,6 @@ fn expr(scanner: &mut Scanner) -> Expr {
         Some(expr) => expr.to_owned(),
         _ => panic!("Invalid syntax expected one more literal"),
     };
-    println!("{:?}", rhs);
     let expr: Expr = {
         let op: Result<&UnaryOp, ()> = rhs.try_into();
         match op {

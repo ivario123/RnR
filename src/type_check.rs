@@ -81,7 +81,7 @@ fn get_meta<'a>(env: &'a mut TypeEnv, expr: &Expr) -> Result<Option<&'a mut Valu
         e => Err(format!("Cannot treat {e} as an identifer")),
     }?;
     let mut scope = env.len() - 1;
-    while let None = env.get(scope).unwrap().0.get(id) {
+    while env.get(scope).unwrap().0.get(id).is_none() {
         if scope == 0 {
             return Ok(None);
         }

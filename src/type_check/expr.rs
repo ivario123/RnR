@@ -146,7 +146,7 @@ impl super::TypeCheck for Expr {
                     _ => Err(format!("Cannot locate {id}")),
                 }?;
 
-                let counter = match meta.ref_counter.clone() {
+                let counter = match meta.ref_counter {
                     None => Some(Ref::Immutable(1)),
                     Some(Ref::Immutable(c)) => Some(Ref::Immutable(c + 1)),
                     Some(_) => {

@@ -38,6 +38,7 @@ pub enum ExprItems {
     Par(Vec<ExprItems>),
     Ident(String),
     Array((Vec<ExprItems>, usize)),
+    Expr(Expr),
 }
 
 impl<'a> TryInto<&'a BinaryOp> for &'a ExprItems {
@@ -78,6 +79,13 @@ impl TryInto<Expr> for &ExprItems {
                 let lhs: Expr = super::expr(&mut scanner);
                 Ok(Expr::Par(Box::new(climb_rec(lhs, 0, &mut scanner))))
             }
+            ExprItems::Ident(i) => Ok(Expr::Ident(i.clone())),
+            ExprItems::Array((els, _len)) => Ok(Expr::Array(
+                els.iter()
+                    .map(|el| Box::new(el.try_into().unwrap()))
+                    .collect(),
+            )),
+            ExprItems::Expr(e) => Ok(e.clone()),
             _ => Err(()),
         }
     }

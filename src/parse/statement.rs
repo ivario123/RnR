@@ -49,8 +49,6 @@ impl Statement {
             let _while: syn::token::While = input.parse()?;
 
             let condition: Expr = input.parse()?;
-            println!("Parsed while {condition}");
-            println!("Trying to parse {input:?} as a block");
             let block: Block = input.parse()?;
 
             Ok(Statement::While(condition, block))

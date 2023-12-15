@@ -116,7 +116,7 @@ impl InteralFormat for Static {
             },
             identifier(&self.id),
             ty(self.ty.to_string()),
-            self.value.to_string()
+            self.value
         )
     }
 }

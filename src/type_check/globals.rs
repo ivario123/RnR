@@ -11,7 +11,7 @@ impl TypeCheck for Static {
     ) -> Result<Self::ReturnType, super::TypeErr> {
         // These are quite trivial to check, we just insert the
         // global in to the latest scope
-        if env.len() == 0 {
+        if env.is_empty() {
             return Err("Cannot declear variables in non existant scope".to_string());
         }
         let last_env = env.len();
