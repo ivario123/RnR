@@ -6,10 +6,6 @@ stages:
     script:
       - curl https://sh.rustup.rs -sSf | sh -s -- -y
       - source "$HOME/.cargo/env"
-      - mkdir -p testing
-      - cp ./* testing/*
-      - git clone https://vesuvio-git.neteq.ltu.se/pln/mips mips
-      - cd testing
 tests:
   only:
     changes:
@@ -19,7 +15,8 @@ tests:
   tags: [vhdl]
   stage: test
   image: rust:latest
-  script:    
+  script:   
+    - ./setup.bash 
     - cargo test -- --show-output
 
 example_tests:
@@ -32,6 +29,7 @@ example_tests:
   stage: test
   image: rust:latest
   script:
+    - ./setup.bash
         - ./test.bash 
 
 
@@ -47,5 +45,6 @@ clippy:
   stage: lint
   image: rust:latest
   script:
+    - ./setup.bash
     - cargo clippy
 
