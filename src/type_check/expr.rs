@@ -96,9 +96,9 @@ impl super::TypeCheck for Expr {
                 match meta.ref_counter {
                     None => {}
                     Some(_) => {
-                        return Err(format!(
-                            "Cannot borrow {id} mutably as it has a live borrow"
-                        ))
+                        //return Err(format!(
+                        //    "Cannot borrow {id} mutably as it has a live borrow"
+                        //))
                     }
                 }
 
@@ -150,9 +150,10 @@ impl super::TypeCheck for Expr {
                     None => Some(Ref::Immutable(1)),
                     Some(Ref::Immutable(c)) => Some(Ref::Immutable(c + 1)),
                     Some(_) => {
-                        return Err(format!(
-                            "Cannot borrow {id} mutably as it has a live borrow"
-                        ))
+                        //    return Err(format!(
+                        //        "Cannot borrow {id} mutably as it has a live borrow"
+                        //    ))
+                        Some(Ref::Mutable)
                     }
                 };
                 let got = match meta.ty.clone() {
