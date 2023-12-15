@@ -1,5 +1,5 @@
 #!/bin/bash
-
+./setup.bash
 cargo build --release
 set e
 cd examples

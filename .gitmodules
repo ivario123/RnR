@@ -1,0 +1,3 @@
+[submodule "mips"]
+	path = mips
+	url = https://vesuvio-git.neteq.ltu.se/pln/mips
