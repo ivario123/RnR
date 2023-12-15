@@ -6,7 +6,10 @@ stages:
     script:
       - curl https://sh.rustup.rs -sSf | sh -s -- -y
       - source "$HOME/.cargo/env"
-
+      - mkdir -p testing
+      - cp ./* testing/*
+      - git clone https://vesuvio-git.neteq.ltu.se/pln/mips mips
+      - cd testing
 tests:
   only:
     changes:
