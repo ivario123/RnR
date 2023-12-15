@@ -1,6 +1,7 @@
 pub mod block;
 pub mod expr;
 pub mod func;
+pub mod globals;
 pub mod literal;
 pub mod op;
 pub mod program;
@@ -9,6 +10,7 @@ pub mod statement;
 pub use block::*;
 pub use expr::*;
 pub use func::*;
+pub use globals::*;
 pub use literal::*;
 pub use op::*;
 pub use program::*;
@@ -27,6 +29,7 @@ pub struct ValueMeta {
     ty: Option<Type>,
     assigned: bool,
     mutable: bool,
+    shadowable: bool,
 }
 #[derive(Debug, Clone)]
 pub struct FunctionMeta {
@@ -106,6 +109,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: false,
+                shadowable: false,
             },
         );
         env.push((scope, HashMap::new()));
@@ -125,7 +129,7 @@ mod test {
             ValueMeta {
                 ty: Some(Type::I32),
                 assigned: false,
-                mutable: false,
+                mutable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -146,6 +150,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: true,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -166,6 +171,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: true,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -192,6 +198,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: false,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -227,6 +234,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: false,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -246,6 +254,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: false,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -278,6 +287,7 @@ mod test {
                 ty: Some(Type::I32),
                 assigned: false,
                 mutable: false,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));
@@ -303,6 +313,7 @@ mod test {
                 ty: Some(Type::Bool),
                 assigned: false,
                 mutable: false,
+                shadowable: true,
             },
         );
         env.push((scope, HashMap::new()));

@@ -1,6 +1,6 @@
-use crate::ast::{program::*, Func};
+use crate::ast::{program::*, Func, Static};
 
-use syn::parse::Parse;
+use syn::{parse::Parse, Token};
 
 impl Parse for Prog {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -9,8 +9,13 @@ impl Parse for Prog {
         let mut statements: Vec<Box<dyn TopLevel>> = vec![];
         // The things we have that we can parse here are all statements.
         while !input.is_empty() {
-            let stmt: Func = input.parse()?;
-            statements.push(Box::new(stmt));
+            if input.peek(Token![fn]) {
+                let stmt: Func = input.parse()?;
+                statements.push(Box::new(stmt));
+            } else {
+                let stmt: Static = input.parse()?;
+                statements.push(Box::new(stmt));
+            }
         }
 
         let mut main_defined = false;

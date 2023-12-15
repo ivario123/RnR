@@ -37,12 +37,24 @@ impl super::TypeCheck for Statement {
                     assigned,
                     ty,
                     mutable,
+                    shadowable: true,
                 };
                 let id = match id {
                     Expr::Ident(i) => i,
                     e => return Err(format!("Cannot use {e} as an identifier")),
                 };
-                env.get_mut(idx).unwrap().0.insert(id, meta.clone());
+                for env in env.iter().rev() {
+                    if let Some(val) = env.0.get(&id) {
+                        if !val.shadowable {
+                            return Err(format!("{self} cannot shaddow static {id}"));
+                        }
+                    }
+                }
+                let env = match env.get_mut(idx) {
+                    Some(env) => env,
+                    None => return Err(format!("Invalid scope when typechecking {self}")),
+                };
+                env.0.insert(id, meta.clone());
                 Ok(Some(Type::Unit))
             }
 

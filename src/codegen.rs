@@ -59,6 +59,10 @@ impl Env {
 
     // returns true if id already in current scope
     fn push_var(&mut self, id: &str) -> bool {
+        if self.scope.len() == 0 {
+            self.scope
+                .push_front(("GLOBAL_SCOPE".to_string(), HashMap::new()))
+        }
         match self.scope[0].1.contains_key(id) {
             true => match self.scope[0].1.get(id).unwrap() {
                 Target::Var(_) => true,
@@ -180,6 +184,18 @@ impl Prog {
         entry_point.push(halt().comment("Main exit"));
         entry_point.append(&mut fns);
         entry_point
+    }
+}
+impl CodeGen for Static {
+    fn codegen(&self, env: &mut Env, fns: &mut Instrs) {
+        let replacement = Statement::Let(
+            Expr::Ident(self.id.clone()),
+            self.mutable,
+            Some(self.ty.clone()),
+            Some(self.value.clone()),
+        );
+        let mut new_instrs = replacement.codegen(env, fns, 0, &mut false);
+        fns.append(&mut new_instrs)
     }
 }
 
@@ -475,7 +491,7 @@ impl CodeGen for Func {
         println!("fn codegen, id {}", self.id);
         let id = match self.id.clone() {
             Expr::Ident(i) => i,
-            _ => todo!(),
+            _ => unreachable!(),
         };
         // insert function in the current environment
         env.insert_fn(&id);

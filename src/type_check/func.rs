@@ -10,6 +10,7 @@ impl From<Arg> for ValueMeta {
             ty: Some(value.ty),
             assigned: true,
             mutable: value.mutable,
+            shadowable: true,
         }
     }
 }

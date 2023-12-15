@@ -1,4 +1,4 @@
-use super::{Arg, Func, FuncCall, Prog};
+use super::{Arg, Func, FuncCall, Prog, Static};
 use crate::ast::{BinaryOp, Block, Expr, Literal, Statement, Type, UnaryOp};
 use std::fmt::{self};
 
@@ -6,6 +6,7 @@ enum KeyWords {
     Let,
     Fn,
     While,
+    Static,
 }
 
 #[cfg(test)]
@@ -17,6 +18,7 @@ mod color_test {
                 super::KeyWords::Let => "let",
                 super::KeyWords::Fn => "fn",
                 super::KeyWords::While => "while",
+                super::KeyWords::Static => "static",
             }
             .to_string();
             write!(f, "{}", s)
@@ -49,6 +51,7 @@ mod color_normal {
                 super::KeyWords::Let => Purple.paint("let"),
                 super::KeyWords::Fn => Purple.paint("fn"),
                 super::KeyWords::While => Purple.paint("while"),
+                super::KeyWords::Static => Purple.paint("static"),
             }
             .to_string();
             write!(f, "{}", s)
@@ -98,6 +101,23 @@ impl InteralFormat for Prog {
             .map(|el| format!("{el}"))
             .collect::<Vec<String>>()
             .join("\n")
+    }
+}
+
+impl InteralFormat for Static {
+    fn fmt_internal(&self, indent: usize) -> String {
+        format!(
+            "{}{} {} {}:{}={};",
+            " ".repeat(indent),
+            KeyWords::Static,
+            match self.mutable {
+                true => ty("mut".to_string()).to_string(),
+                _ => "".to_string(),
+            },
+            identifier(&self.id),
+            ty(self.ty.to_string()),
+            self.value.to_string()
+        )
     }
 }
 
@@ -236,7 +256,7 @@ impl fmt::Display for BinaryOp {
         write!(f, "{}", s)
     }
 }
-fmt!(Prog, Block, Func, Expr, Statement,);
+fmt!(Prog, Block, Func, Expr, Statement, Static,);
 
 impl fmt::Display for FuncCall {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
