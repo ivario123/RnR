@@ -1,6 +1,6 @@
 use rnr::codegen::CompileTarget;
+use rnr::prelude::*;
 use rnr::{check, eval};
-use rnr::{prelude::*};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -55,20 +55,18 @@ fn main() {
     print!("rnr parsing: ");
     let prog: Ast<Prog> = s.into();
     println!("\nrnr prog:\n{}", prog);
-    let mut type_check_passed = true;
     if opt.type_check {
         print!("rnr type checking: ");
         match check!(prog) {
             Ok(_) => println!("passed"),
             Err(err) => {
-                type_check_passed = false;
                 eprintln!("error: {}", err);
                 return;
             }
         }
     }
 
-    if opt.vm && type_check_passed {
+    if opt.vm {
         println!("rnr evaluating");
         let iter = opt.max_iter;
         match eval!(prog, iter) {
@@ -100,5 +98,5 @@ fn main() {
         }
     };
     let plain_bytes = strip_ansi_escapes::strip(format!("{asm}").as_bytes());
-    file.write(&plain_bytes).unwrap();
+    file.write_all(&plain_bytes).unwrap();
 }
