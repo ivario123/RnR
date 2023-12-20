@@ -78,14 +78,14 @@ boolean_operation = and | or;
 
 // Composite expressions
 operation        = numeric_operation | boolean_operation;
-binary_operation = (litral,operation,literal);
+binary_operation = (expression,operation,expression);
 
 
 invert          = not, bool;
 minus_op        = "-",int;
-unary_operation = invert | minus_op;
+unary_op = invert | minus_op | "&" | "&mut" | "*";
 
-unary_operation = (unary_operator,unary_operand);
+unary_operation = unary_operator,expression;
 
 parentheses     = (open_paren,{expression}, closing_paren);
 
@@ -111,10 +111,11 @@ let_statement           = let,["mut"], expression, [(":", type)], [("=", express
 assign_statement        = expression, "=", expression;
 while_statement         = while, expression, block;
 expression_statement    = expression;
+op_assign               = [let],ident,operation,"=",expression;
 
 function_declaration    = "fn", ident, open_paren, {(["mut"], ident, ":", type )}, closing_paren, [("->",type)], block;
 
-statement               = let_statement | assign_statement | while_statement | expression_statement | block | function_declaration;
+statement               = let_statement | assign_statement | while_statement | expression_statement | block | function_declaration|op_assign;
 
 // block
 
