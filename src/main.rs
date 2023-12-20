@@ -25,7 +25,7 @@ struct Opt {
     #[structopt(short, long, default_value = "100")]
     max_iter: usize,
 
-    #[structopt(short, long)]
+    #[structopt(long)]
     target: Option<CompileTarget>,
 
     #[structopt(short, long, default_value = "")]
