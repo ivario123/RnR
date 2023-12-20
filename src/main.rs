@@ -25,12 +25,16 @@ struct Opt {
     #[structopt(short, long, default_value = "100")]
     max_iter: usize,
 
+    /// Decides what target to build the assembly for
     #[structopt(long)]
     target: Option<CompileTarget>,
 
+    /// Where to store the generated assembly
     #[structopt(short, long, default_value = "")]
     output_file: String,
 
+    /// Wether or not the generated assembly should be ran through the [`target`](Self::target)
+    /// emulator
     #[structopt(short, long)]
     asm_sim: bool,
 }
