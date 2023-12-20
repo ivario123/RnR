@@ -41,12 +41,14 @@ impl Statement {
             }
             Statement::Assign(id, e) => {
                 let len = env.len();
+                println!("Assigning {id} = {e}");
                 let rhs = match (e.eval(env, len - 1, max_iter, iter_counter), scope) {
                     // If we can't eval in this scope go one lower
                     (Ok(val), _) => Ok(val),
                     (Err(e), 0) => Err(e),
                     (_, idx) => e.eval(env, idx - 1, max_iter, iter_counter),
                 }?;
+                println!("assigning {id} = {rhs}");
 
                 match (
                     id.clone()

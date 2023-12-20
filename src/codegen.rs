@@ -632,6 +632,7 @@ fn main(){
     fn mips_test_expr(expr: &str, assert_val: i32) {
         let ts: proc_macro2::TokenStream = expr.parse().unwrap();
         let expr: Expr = syn::parse2(ts).unwrap();
+        println!("testing : {expr}");
         let mut env = Env::new();
         let mut asm = Instrs::new();
         let fns = &mut Instrs::new();
@@ -677,7 +678,7 @@ fn main(){
     #[test]
     fn mips_expr_int2() {
         // notice, we do not climb here
-        mips_test_expr("(2 - 5) - 7", 2 - 5 - 7);
+        mips_test_expr("(2 - 5) - 7", (2 - 5) - 7);
     }
 
     #[test]

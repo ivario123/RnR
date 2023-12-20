@@ -16,7 +16,9 @@ impl super::TypeCheck for Expr {
                 let res = env.get(idx);
                 let scope = match res {
                     Some(scope) => scope,
-                    None => return Err("Invalid scope usage".to_string()),
+                    None => {
+                        return Err("Invalid scope usage".to_string());
+                    }
                 };
 
                 let res = scope.0.get(&id);
@@ -96,9 +98,9 @@ impl super::TypeCheck for Expr {
                 match meta.ref_counter {
                     None => {}
                     Some(_) => {
-                        //return Err(format!(
-                        //    "Cannot borrow {id} mutably as it has a live borrow"
-                        //))
+                        return Err(format!(
+                            "Cannot borrow {id} mutably as it has a live borrow"
+                        ))
                     }
                 }
 
@@ -150,10 +152,9 @@ impl super::TypeCheck for Expr {
                     None => Some(Ref::Immutable(1)),
                     Some(Ref::Immutable(c)) => Some(Ref::Immutable(c + 1)),
                     Some(_) => {
-                        //    return Err(format!(
-                        //        "Cannot borrow {id} mutably as it has a live borrow"
-                        //    ))
-                        Some(Ref::Mutable)
+                        return Err(format!(
+                            "Cannot borrow {id} mutably as it has a live borrow"
+                        ))
                     }
                 };
                 let got = match meta.ty.clone() {

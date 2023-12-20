@@ -321,7 +321,7 @@ mod test {
         );
         env.push((scope, HashMap::new()));
         let len = env.len();
-        let ty = e.check(&mut env, len).unwrap();
+        let ty = e.check(&mut env, len - 1).unwrap();
         assert_eq!(ty, Type::I32);
     }
 

@@ -128,6 +128,7 @@ impl BinaryOp {
                 )))
             }
         };
+        println!("{left} {self} {right}");
         Ok(Values::Lit(match self {
             Add => Int(left.get_int()? + right.get_int()?),
             Sub => Int(left.get_int()?) - Int(right.get_int()?),

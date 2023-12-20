@@ -44,6 +44,7 @@ impl Expr {
         } else if input.peek(syn::Ident) {
             // we have a left Ident, e.g, "my_best_ident_ever"
             let ident: syn::Ident = input.parse()?;
+            println!("Found identifier {ident}");
             Expr::Ident(ident.to_string())
         } else if input.peek(syn::token::If) {
             //println!("Parsing an if statement");
