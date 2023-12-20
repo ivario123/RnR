@@ -6,7 +6,8 @@
 - Added syntax highlighting when not running in test mode.
 - Added command line arguments for outputing the generated assembly to a file.
 - Added support for mutability checks through borrows.
-
+- Added global consts
+- Corrected EBNF
 
 ## 2021-10-01
 
