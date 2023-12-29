@@ -49,7 +49,8 @@ impl UnaryOp {
 
 // Flattens an Expr into a vector of ExprItems
 fn to_vec(e: Expr) -> Vec<ExprItems> {
-    let ret = match e {
+    
+    match e {
         Lit(l) => vec![ExprItems::Lit(l)],
         BinOp(op, l, r) => {
             let mut r = to_vec(*r);
@@ -89,8 +90,7 @@ fn to_vec(e: Expr) -> Vec<ExprItems> {
             vec![ExprItems::Array((exprs, len))]
         }
         e => vec![ExprItems::Expr(e)],
-    };
-    ret
+    }
 }
 
 fn peek_precedence<F>(scanner: &mut Scanner, f: F) -> bool

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::codegen::CodeGen;
+use crate::{codegen::CodeGen, AstNode};
 
 pub trait Prio {
     fn prio(&self) -> usize {
@@ -9,11 +9,7 @@ pub trait Prio {
 }
 
 pub trait TopLevel:
-    crate::vm::Eval
-    + crate::type_check::TypeCheck<ReturnType = crate::ast::Type>
-    + Display
-    + Prio
-    + CodeGen
+    crate::vm::Eval + crate::type_check::TypeCheck + Display + Prio + CodeGen
 {
     fn is_main(&self) -> bool;
 }
@@ -69,3 +65,4 @@ impl From<Vec<Box<dyn TopLevel>>> for Prog {
         Self { statements: value }
     }
 }
+impl AstNode for Prog{}

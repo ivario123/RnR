@@ -1,5 +1,8 @@
+use crate::AstNode;
+
 use super::{Expr, Prio, TopLevel, Type};
 
+#[derive(Debug)]
 pub struct Static {
     pub(crate) ty: Type,
     pub(crate) mutable: bool,
@@ -16,3 +19,6 @@ impl TopLevel for Static {
         false
     }
 }
+
+impl AstNode for Static{}
+

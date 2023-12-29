@@ -1,14 +1,9 @@
 use super::TypeCheck;
-use crate::ast::program::Prog;
+use crate::ast::{program::Prog, Type};
 use crate::intrinsics::vm_println;
 
 impl TypeCheck for Prog {
-    type ReturnType = ();
-    fn check(
-        &self,
-        env: &mut super::TypeEnv,
-        idx: usize,
-    ) -> Result<Self::ReturnType, super::TypeErr> {
+    fn check(&self, env: &mut super::TypeEnv, idx: usize) -> Result<Type, super::TypeErr> {
         let mut global_scope = (
             crate::type_check::Scope::new(),
             crate::type_check::FunctionScope::new(),
@@ -26,6 +21,6 @@ impl TypeCheck for Prog {
                 t => return Err(format!("All top level expressions should return unit type, got {t} when evaluting {el}")),
             };
         }
-        Ok(())
+        Ok(Type::Unit)
     }
 }

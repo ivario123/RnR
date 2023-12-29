@@ -4,5 +4,8 @@
         "Peekable",
         "eval",
         "structopt"
+    ],
+    "cSpell.words": [
+        "codegen"
     ]
 }

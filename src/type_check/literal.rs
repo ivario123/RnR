@@ -2,8 +2,7 @@ use super::{TypeCheck, TypeErr};
 use crate::ast::{Expr, Literal, Type};
 
 impl TypeCheck for Literal {
-    type ReturnType = Type;
-    fn check(&self, env: &mut super::TypeEnv, _idx: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut super::TypeEnv, _idx: usize) -> Result<Type, TypeErr> {
         match self {
             Literal::Unit => Ok(Type::Unit),
             // Default type for Literal ints is i32 this can be coerced in expressions.
@@ -11,7 +10,7 @@ impl TypeCheck for Literal {
             Literal::Bool(_) => Ok(Type::Bool),
             Literal::String(_) => Ok(Type::String),
             Literal::Array(arr) => {
-                let types: Vec<Result<Self::ReturnType, TypeErr>> = arr
+                let types: Vec<Result<Type, TypeErr>> = arr
                     .iter()
                     .map(|el| Expr::Lit((**el).clone()).check(env, env.len() - 1))
                     .collect();

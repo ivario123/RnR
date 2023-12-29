@@ -2,12 +2,11 @@ use super::{get_meta, Operation, Ref, TypeEnv, TypeErr};
 use crate::ast::{Expr, Literal, Type, UnaryOp};
 
 impl super::TypeCheck for Expr {
-    type ReturnType = Type;
     // check_expr
     // recursively checks an expression for type correctness
     // on success: the expression type is returned
     // on failure, an expression type error is returned
-    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Type, TypeErr> {
         if env.len() < idx || env.is_empty() {
             return Err("No scope decleared".to_owned());
         }

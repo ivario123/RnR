@@ -36,8 +36,7 @@ fn reconstruct_evn(env: &TypeEnv, args: Vec<Arg>) -> TypeEnv {
     new_env
 }
 impl TypeCheck for FuncCall {
-    type ReturnType = Type;
-    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Type, TypeErr> {
         let mut args: Vec<Type> = vec![];
         for arg in self.args.iter() {
             args.push(arg.check(env, idx)?)
@@ -89,8 +88,7 @@ impl TypeCheck for FuncCall {
 }
 
 impl TypeCheck for Func {
-    type ReturnType = Type;
-    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Type, TypeErr> {
         // We have a function decleration, this should be inserted into the fn env and then
         // the 0th env and a new function env should be used to check wether or not the
         // internal code is valid

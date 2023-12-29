@@ -59,8 +59,7 @@ pub type TypeErr = String;
 /// This means that given the current vec of all
 /// [`Scope`]s and the index of the current scope.
 pub trait TypeCheck {
-    type ReturnType;
-    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr>;
+    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Type, TypeErr>;
 }
 
 impl From<Func> for FunctionMeta {

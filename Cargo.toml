@@ -11,6 +11,8 @@ structopt = "0.3.26"
 ansi_term = "0.12.1"
 mips = { path = "./mips" }
 strip-ansi-escapes = "0.2.0"
+no-panic = "0.1"
+#llvm-ir = { version = "0.9.0", features = ["llvm-15"] }
 
 [dependencies.syn]
 features = ["full", "extra-traits"]

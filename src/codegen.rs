@@ -1,5 +1,5 @@
+pub mod llvm;
 // codegen for a simple MIPS 3k in single cycle mode.
-#![allow(dead_code)]
 use crate::ast::*;
 use crate::{ast::BinaryOp, Ast};
 
@@ -29,10 +29,6 @@ impl FromStr for CompileTarget {
 enum Target {
     Var(i16), // offset on stack
     Fn,       // address to function in memory
-}
-
-fn name_space_n(block_number: usize, block_type: &str) -> String {
-    format!("{}_{}", block_number, block_type)
 }
 
 #[derive(Debug, Clone)]
@@ -411,12 +407,6 @@ impl Statement {
     }
 }
 
-impl Ast<Block> {
-    fn codegen(&self, env: &mut Env, fns: &mut Instrs, ns: &str) -> Instrs {
-        self.t.codegen(env, fns, ns)
-    }
-}
-
 impl Block {
     fn codegen(&self, env: &mut Env, fns: &mut Instrs, ns: &str) -> Instrs {
         //
@@ -550,6 +540,11 @@ mod tests {
 
     use super::*;
     use mips::{error::Error, vm::Mips};
+    impl Ast<Block> {
+        fn codegen(&self, env: &mut Env, fns: &mut Instrs, ns: &str) -> Instrs {
+            self.t.codegen(env, fns, ns)
+        }
+    }
 
     // test the frame management
     #[test]
@@ -1405,6 +1400,7 @@ fn main(){
     }
 
     #[test]
+    #[allow(unused)]
     fn rust_fn_nest() {
         let res = {
             fn f(x: i32) -> i32 {

@@ -1,3 +1,5 @@
+use crate::AstNode;
+
 use super::{BinaryOp, Block, FuncCall, Literal, UnaryOp};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -94,8 +96,8 @@ impl Expr {
             Expr::BinOp(_, _, _) => true,
             Expr::UnOp(_, _) => true,
             Expr::Par(_) => true,
-            Expr::IfThenElse(_, _, _) => false,
             Expr::Array(_) => true,
+            Expr::IfThenElse(_, _, _) => false,
             Expr::Index(_, _) => false,
             Expr::IndexMut(_, _) => false,
             Expr::FuncCall(_) => false,
@@ -115,3 +117,5 @@ impl From<i32> for Expr {
         Expr::Lit(Literal::Int(i))
     }
 }
+
+impl AstNode for Expr{}

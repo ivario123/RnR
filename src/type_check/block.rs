@@ -1,8 +1,7 @@
 use super::{FunctionScope, Scope, TypeEnv, TypeErr};
 use crate::ast::{Block, Type};
 impl super::TypeCheck for Block {
-    type ReturnType = Type;
-    fn check(&self, env: &mut TypeEnv, _: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut TypeEnv, _: usize) -> Result<Type, TypeErr> {
         // Push a new scope for the block.
         let scope = Scope::new();
         env.push((scope, FunctionScope::new()));

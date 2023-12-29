@@ -1,10 +1,8 @@
 #![deny(clippy::all)]
 #![deny(warnings)]
+#![deny(clippy::panic)]
 
-// Once you have back-ported your code
-// you should remove the above attributes.
-// Strive to keep your code free of warnings.
-
+use ast::{HirNode, Type};
 use prelude::TypeCheck;
 use syn::parse::Parse;
 use vm::Eval;
@@ -16,8 +14,8 @@ pub mod error;
 // AST related
 pub mod ast;
 pub mod climb;
+pub mod linearize;
 pub mod parse;
-
 // type generic environment
 //pub mod env;
 // intrinsic functions
@@ -37,12 +35,27 @@ pub mod prelude {
     pub use super::Ast;
 }
 
+pub trait AstNode: Eval + TypeCheck + std::fmt::Debug {
+}
+
+
 /// Ast wrapper for improved error messages
-pub struct Ast<T: Parse + TypeCheck + Eval> {
+pub struct Ast<T: AstNode> {
     t: T,
 }
 
-impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
+/// High level representation, returned after typechecking.
+pub struct HIR<T: ast::HIR> {
+    root: T,
+}
+
+impl<T: ast::HIR> ast::HIR for HIR<T> {
+    fn get_type(&self) -> Type {
+        self.root.get_type()
+    }
+}
+
+impl<T: AstNode + Parse> From<String> for Ast<T> {
     fn from(value: String) -> Self {
         let map = |el: Vec<String>, r: std::ops::Range<usize>| {
             let r_clone = r.clone();
@@ -74,7 +87,7 @@ impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
                     line - 4..line + 5,
                 );
 
-                eprintln!("Error {e} occured on line {} \n{lines}", line);
+                eprintln!("Error {e} ocurred on line {} \n{lines}", line);
 
                 panic!("Invalid input");
             }
@@ -91,7 +104,7 @@ impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
                     line - 4..line + 5,
                 );
 
-                eprintln!("Error {e} occured on line {} \n{lines}", line);
+                eprintln!("Error {e} ocurred on line {} \n{lines}", line);
 
                 panic!("Invalid input");
             }
@@ -100,7 +113,7 @@ impl<T: Parse + TypeCheck + Eval> From<String> for Ast<T> {
         Self { t }
     }
 }
-impl<T: Parse + TypeCheck + Eval> Eval for Ast<T> {
+impl<T: AstNode> Eval for Ast<T> {
     fn eval(
         &self,
         env: &mut prelude::VarEnv,
@@ -112,21 +125,30 @@ impl<T: Parse + TypeCheck + Eval> Eval for Ast<T> {
     }
 }
 
-impl<T: Parse + TypeCheck + Eval> TypeCheck for Ast<T> {
-    type ReturnType = T::ReturnType;
-    fn check(
-        &self,
-        env: &mut prelude::TypeEnv,
-        idx: usize,
-    ) -> Result<Self::ReturnType, type_check::TypeErr> {
+impl<T: AstNode> TypeCheck for Ast<T> {
+    fn check(&self, env: &mut prelude::TypeEnv, idx: usize) -> Result<Type, type_check::TypeErr> {
         self.t.check(env, idx)
     }
 }
-impl<T: Parse + TypeCheck + Eval + std::fmt::Display> std::fmt::Display for Ast<T> {
+
+impl<T: AstNode + std::fmt::Display> std::fmt::Display for Ast<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.t)
     }
 }
+
+impl<T> Ast<T>
+where
+    T: AstNode + std::fmt::Display,
+{
+    #[allow(dead_code)]
+    /// Performs type checking on the AST
+    /// Reduces it down in to a High level intermediate representation
+    fn into_hir(self) -> HIR<HirNode<T>> {
+        todo!()
+    }
+}
+
 // ========================================
 //              Helper macros
 // ========================================
@@ -153,6 +175,7 @@ macro_rules! eval {
 #[macro_export]
 macro_rules! parse {
     ($text:ident,$t:ty) => {{
+        use crate::Ast;
         let ret: Ast<$t> = $text.into();
         ret
     }};

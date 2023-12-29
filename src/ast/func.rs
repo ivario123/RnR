@@ -1,3 +1,5 @@
+use crate::AstNode;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Arg {
     pub id: super::Expr,
@@ -18,3 +20,7 @@ pub struct FuncCall {
     pub id: Box<super::Expr>,
     pub args: Box<Vec<super::Expr>>,
 }
+
+
+impl AstNode for Func{}
+

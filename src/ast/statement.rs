@@ -1,3 +1,5 @@
+use crate::AstNode;
+
 use super::{block::Block, expr::Expr, types::Type};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -9,3 +11,4 @@ pub enum Statement {
     Block(Block),
     FnDecleration(super::Func),
 }
+impl AstNode for Statement{}

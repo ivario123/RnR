@@ -3,12 +3,7 @@ use crate::ast::{Static, Type};
 use super::{TypeCheck, ValueMeta};
 
 impl TypeCheck for Static {
-    type ReturnType = Type;
-    fn check(
-        &self,
-        env: &mut super::TypeEnv,
-        _idx: usize,
-    ) -> Result<Self::ReturnType, super::TypeErr> {
+    fn check(&self, env: &mut super::TypeEnv, _idx: usize) -> Result<Type, super::TypeErr> {
         // These are quite trivial to check, we just insert the
         // global in to the latest scope
         if env.is_empty() {

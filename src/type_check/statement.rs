@@ -2,8 +2,7 @@ use super::{TypeEnv, TypeErr, ValueMeta};
 use crate::ast::{Expr, Statement, Type, UnaryOp};
 
 impl super::TypeCheck for Statement {
-    type ReturnType = Type;
-    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Self::ReturnType, TypeErr> {
+    fn check(&self, env: &mut TypeEnv, idx: usize) -> Result<Type, TypeErr> {
         if env.len() < idx {
             return Err("Trying to read from undecleared scope".to_owned());
         }
