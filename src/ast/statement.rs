@@ -11,4 +11,4 @@ pub enum Statement {
     Block(Block),
     FnDecleration(super::Func),
 }
-impl AstNode for Statement{}
+impl AstNode for Statement {}

@@ -1,4 +1,4 @@
-use crate::ast::{BinaryOp, UnaryOp, Type};
+use crate::ast::{BinaryOp, Type, UnaryOp};
 
 /// A generic operation allows the type checker to know expected return types and
 /// operands
@@ -10,7 +10,7 @@ pub trait Operation {
 
 impl Operation for BinaryOp {
     type Operands = (super::Type, super::Type);
-    
+
     fn return_type(&self, _operands: Self::Operands) -> Result<super::Type, super::TypeErr> {
         match self {
             BinaryOp::And | BinaryOp::Or | BinaryOp::Eq | BinaryOp::Lt | BinaryOp::Gt => {
@@ -19,10 +19,12 @@ impl Operation for BinaryOp {
             _ => Ok(super::Type::I32),
         }
     }
-    
+
     fn type_check(&self, operands: Self::Operands) -> bool {
         match self {
-            Self::Add | Self::Sub | Self::Mul | Self::Div | Self::Lt | Self::Gt => matches!(operands, (Type::I32, Type::I32)),
+            Self::Add | Self::Sub | Self::Mul | Self::Div | Self::Lt | Self::Gt => {
+                matches!(operands, (Type::I32, Type::I32))
+            }
             Self::Eq => operands.0 == operands.1,
             Self::And | Self::Or => operands == (Type::Bool, Type::Bool),
         }
@@ -31,7 +33,7 @@ impl Operation for BinaryOp {
 
 impl Operation for UnaryOp {
     type Operands = super::Type;
-    
+
     fn return_type(&self, operands: Self::Operands) -> Result<super::Type, super::TypeErr> {
         match self {
             Self::Not => Ok(super::Type::Bool),
@@ -45,7 +47,7 @@ impl Operation for UnaryOp {
             },
         }
     }
-    
+
     fn type_check(&self, operands: Self::Operands) -> bool {
         match self {
             Self::Not => operands == super::Type::Bool,

@@ -97,7 +97,9 @@ impl super::Eval for Expr {
                     while local_scope.get(&id(counter)).is_some() {
                         match counter.checked_add(1) {
                             Some(c) => counter = c,
-                            _ => return Err(VmErr::Err("Cannot borrow more literals.".to_string())),
+                            _ => {
+                                return Err(VmErr::Err("Cannot borrow more literals.".to_string()))
+                            }
                         };
                     }
                     let meta = ValueMeta { value: Some(val) };
@@ -120,7 +122,9 @@ impl super::Eval for Expr {
                 match target_env.0.get(&id) {
                     Some(meta) => match &meta.value {
                         Some(value) => Ok(value.clone()),
-                        _ => Err(VmErr::Err("Cannot derreference unassigned value".to_string())),
+                        _ => Err(VmErr::Err(
+                            "Cannot derreference unassigned value".to_string(),
+                        )),
                     },
                     _ => Err(VmErr::Err(format!("Invalid refference {self}"))),
                 }
@@ -385,7 +389,9 @@ impl Expr {
                         match scope.0.get(&id) {
                             Some(meta) => {
                                 if let Some(Values::Ref(_)) = meta.value {
-                                    return Err(VmErr::Err("Cannot assign to a refference".to_string()))
+                                    return Err(VmErr::Err(
+                                        "Cannot assign to a refference".to_string(),
+                                    ));
                                 };
                             }
                             _ => return Err(VmErr::Err(format!("Cannot find identifier {id}"))),

@@ -6,13 +6,13 @@ main_GLOBAL_SCOPEAddiu sp, sp, -4 (0xfffc)# enter frame 'fn main', push ra
             Addiu sp, sp, -4 (0xfffc)# push fp
             Sw fp, 0[sp] (0x0000)
             Add fp, zero, sp
-            Addiu sp, sp, -4 (0xfffc)# allocate '_a'
-            Ori t0, zero, 0 (0x0000)# '_a = 0', integer constant 0, 16 bit constant
+            Addiu sp, sp, -4 (0xfffc)# allocate '>2#2!1__a'
+            Ori t0, zero, 0 (0x0000)# '>2#2!1__a = 0', integer constant 0, 16 bit constant
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)
             Lw t0, 0[sp] (0x0000)# pop t0
             Addiu sp, sp, 4 (0x0004)
-            Sw t0, -4[fp] (0xfffc)# store '_a' at offset -4
+            Sw t0, -4[fp] (0xfffc)# store '>2#2!1__a' at offset -4
             Ori t0, zero, 0 (0x0000)# exit block semi, () return value, 16 bit constant
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)

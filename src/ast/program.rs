@@ -9,7 +9,13 @@ pub trait Prio {
 }
 
 pub trait TopLevel:
-    crate::vm::Eval + crate::type_check::TypeCheck + Display + Prio + CodeGen
+    crate::vm::Eval
+    + crate::type_check::TypeCheck
+    + crate::borrow_checker::Linearize
+    + crate::borrow_checker::PreDeclareTop
+    + Display
+    + Prio
+    + CodeGen
 {
     fn is_main(&self) -> bool;
 }
@@ -65,4 +71,4 @@ impl From<Vec<Box<dyn TopLevel>>> for Prog {
         Self { statements: value }
     }
 }
-impl AstNode for Prog{}
+impl AstNode for Prog {}

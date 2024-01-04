@@ -20,5 +20,4 @@ impl TopLevel for Static {
     }
 }
 
-impl AstNode for Static{}
-
+impl AstNode for Static {}

@@ -13,8 +13,8 @@ pub mod error;
 
 // AST related
 pub mod ast;
+pub mod borrow_checker;
 pub mod climb;
-pub mod linearize;
 pub mod parse;
 // type generic environment
 //pub mod env;
@@ -30,16 +30,17 @@ pub mod vm;
 // pub mod bc;
 pub mod prelude {
     pub use super::ast::Prog;
+    pub use super::borrow_checker::{BCError, Env, Linearize, PreDeclareTop};
     pub use super::type_check::{TypeCheck, TypeEnv};
     pub use super::vm::{Eval, VarEnv};
     pub use super::Ast;
+    pub use super::{borrow_check, check, eval, parse};
 }
 
-pub trait AstNode: Eval + TypeCheck + std::fmt::Debug {
-}
-
+pub trait AstNode: Eval + TypeCheck + std::fmt::Debug {}
 
 /// Ast wrapper for improved error messages
+#[derive(Clone)]
 pub struct Ast<T: AstNode> {
     t: T,
 }
@@ -165,6 +166,18 @@ macro_rules! check {
     ($id:ident) => {
         $id.check(&mut TypeEnv::new(), 0)
     };
+}
+#[macro_export]
+macro_rules! borrow_check {
+    ($id:ident) => {{
+        match $id.pre_declare_top(&mut 0, &mut 0) {
+            Ok(_) => {
+                let mut env = Env::new();
+                $id.linearize(&mut env)
+            }
+            Err(e) => Err(BCError::EnvError(e)),
+        }
+    }};
 }
 #[macro_export]
 macro_rules! eval {
