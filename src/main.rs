@@ -26,7 +26,7 @@ struct Opt {
     #[structopt(short, long, default_value = "100")]
     max_iter: usize,
 
-    /// Decides what target to build the assembly for
+    /// Decides 52d2c49...what target to build the assembly for
     #[structopt(long)]
     target: Option<CompileTarget>,
 
@@ -93,10 +93,6 @@ fn main() {
             }
         }
     }
-
-    let a = 2;
-    let a = &a;
-    let _b = *a;
     if opt.target.is_none() {
         return;
     }
