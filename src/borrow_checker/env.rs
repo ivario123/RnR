@@ -231,11 +231,13 @@ where
 
 
     pub fn dereff(&mut self, target_id: &String) -> Result<(), BCError> {
+        println!("{:?},{:?}",self.borrowers,target_id);
         let ref_id = match self.borrowers.get(target_id) {
             Some(ref_id) => Ok(ref_id),
             None => Err(BCError::DerrefOfOutOfScope),
         }?;
-        // Validate on derefference
+
+        // Validate on dereference
         match self.borrows.map.get(ref_id) {
             Some((_, r)) => {
                 for el in r {

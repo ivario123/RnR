@@ -51,8 +51,8 @@ impl Expr {
             Expr::UnOp(UnaryOp::Dereff, rhs ) => {
                 let e_clone = rhs.clone();
                 rhs.linearize(env)?;
-                let ident = match *e_clone {
-                    Expr::Ident(i) => Ok(i),
+                let ident = match *e_clone.clone() {
+                    Expr::Ident(_) => env.format_ident(*e_clone).map_err(BCError::EnvError),
                     e => Err(BCError::InvalidIdentifierType(e))
                 }?;
                 env.dereff(&ident)?;

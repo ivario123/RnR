@@ -1,14 +1,12 @@
 fn main() {
-    let mut a = 2;
-    let b = &mut a;
     let a = 1;
     a;
-    *b = 1;
-
-    let mut b = &a;
+    let mut a_2 = 2;
     {
-        let a = 2;
-        b = &a;
+    let b = &mut a_2;
+    b;
     };
-    *b;
+    let c = &a_2;
+    c;
+    *c;
 }
