@@ -21,6 +21,4 @@ pub struct FuncCall {
     pub args: Box<Vec<super::Expr>>,
 }
 
-
-impl AstNode for Func{}
-
+impl AstNode for Func {}

@@ -158,7 +158,7 @@ impl InteralFormat for Statement {
             Statement::Assign(lhs, rhs) => {
                 format!("{lhs} = {}", rhs.fmt_internal(indent))
             }
-            Statement::Block(b) => b.fmt_internal(indent),
+            Statement::Block(b) => b.fmt_internal(indent + 1),
             Statement::FnDecleration(func) => func.fmt_internal(indent),
         };
         format!("{}{};", " ".repeat(indent), str)

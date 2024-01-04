@@ -7,4 +7,4 @@ pub struct Block {
     pub statements: Vec<Statement>,
     pub semi: bool,
 }
-impl AstNode for Block{}
+impl AstNode for Block {}

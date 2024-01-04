@@ -1,7 +1,6 @@
 use super::{BinaryOp, Parse, ParseStream, Peek, Result, Token, UnaryOp};
 
 impl super::Peek for BinaryOp {
-    
     fn peek<const DIST: usize>(input: ParseStream) -> bool {
         use syn::token;
         // check if next token is `+`
@@ -17,7 +16,6 @@ impl super::Peek for BinaryOp {
     }
 }
 impl Parse for BinaryOp {
-    
     fn parse(input: ParseStream) -> Result<Self> {
         // check if next token is `+`
         if input.peek(Token![+]) {
@@ -55,7 +53,6 @@ impl Parse for BinaryOp {
     }
 }
 impl Peek for UnaryOp {
-    
     fn peek<const DIST: usize>(input: ParseStream) -> bool {
         // check if next token is `+`
         Self::peek_buffer(input, Token![!], DIST)
@@ -66,8 +63,6 @@ impl Peek for UnaryOp {
     }
 }
 impl Parse for UnaryOp {
-
-    
     fn parse(input: ParseStream) -> Result<Self> {
         if input.peek(Token![!]) {
             let _: Token![!] = input.parse()?;

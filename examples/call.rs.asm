@@ -1,18 +1,18 @@
             Add fp, zero, sp# move sp to frame pointer
             Blez zero, zero, main_GLOBAL_SCOPE# call main
             Halt# Main exit
-f_GLOBAL_SCOPEAddiu sp, sp, -4 (0xfffc)# enter frame 'fn fa: i32', push ra
+f_GLOBAL_SCOPEAddiu sp, sp, -4 (0xfffc)# enter frame 'fn f>1#1!1_a: i32', push ra
             Sw ra, 0[sp] (0x0000)
             Addiu sp, sp, -4 (0xfffc)# push fp
             Sw fp, 0[sp] (0x0000)
             Add fp, zero, sp
-            Addiu sp, sp, -4 (0xfffc)# allocate '_b'
-            Lw t0, 8[fp] (0x0008)# '_b = a', load 'a' at offset 8
+            Addiu sp, sp, -4 (0xfffc)# allocate '>2#2!1__b'
+            Lw t0, 8[fp] (0x0008)# '>2#2!1__b = >1#1!1_a', load '>1#1!1_a' at offset 8
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)
             Lw t0, 0[sp] (0x0000)# pop t0
             Addiu sp, sp, 4 (0x0004)
-            Sw t0, -4[fp] (0xfffc)# store '_b' at offset -4
+            Sw t0, -4[fp] (0xfffc)# store '>2#2!1__b' at offset -4
             Ori t0, zero, 0 (0x0000)# exit block semi, () return value, 16 bit constant
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)

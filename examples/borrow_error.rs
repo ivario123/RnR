@@ -1,7 +1,7 @@
 fn main() {
     let mut a = 0;
-    let _b = &mut a;
-    let _c = &a;
-    // *b = 4;
-    // let d = *c; // <- error here, with stacked borrows
+    let b = &mut a;
+    let c = &a; // <- Error here with my borrow checker
+    *b = 4;
+    let _d = *c; // <- error here, with stacked borrows
 }

@@ -49,7 +49,6 @@ impl UnaryOp {
 
 // Flattens an Expr into a vector of ExprItems
 fn to_vec(e: Expr) -> Vec<ExprItems> {
-    
     match e {
         Lit(l) => vec![ExprItems::Lit(l)],
         BinOp(op, l, r) => {

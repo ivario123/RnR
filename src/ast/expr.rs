@@ -118,4 +118,4 @@ impl From<i32> for Expr {
     }
 }
 
-impl AstNode for Expr{}
+impl AstNode for Expr {}

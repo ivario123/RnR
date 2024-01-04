@@ -22,15 +22,15 @@ pub use types::*;
 
 use crate::prelude::TypeCheck;
 
-pub trait HIR{
+pub trait HIR {
     /// Returns the type of the [`HIR`] node
     fn get_type(&self) -> Type;
 }
 
-pub struct HirNode<T:TypeCheck> {
+pub struct HirNode<T: TypeCheck> {
     #[allow(unused)]
     node: AstNode<T>,
-    ret_type: Type
+    ret_type: Type,
 }
 
 #[allow(dead_code)]
@@ -39,13 +39,11 @@ pub struct AstNode<T: TypeCheck> {
     span: proc_macro2::Span,
 }
 
-impl<T:TypeCheck> HIR for HirNode<T>{
+impl<T: TypeCheck> HIR for HirNode<T> {
     fn get_type(&self) -> Type {
         self.ret_type.clone()
     }
 }
-
-
 
 #[cfg(test)]
 mod test {

@@ -150,11 +150,7 @@ impl super::TypeCheck for Expr {
                 let counter = match meta.ref_counter {
                     None => Some(Ref::Immutable(1)),
                     Some(Ref::Immutable(c)) => Some(Ref::Immutable(c + 1)),
-                    Some(_) => {
-                        return Err(format!(
-                            "Cannot borrow {id} mutably as it has a live borrow"
-                        ))
-                    }
+                    Some(_) => None,
                 };
                 let got = match meta.ty.clone() {
                     Some(ty) => Ok(ty),
@@ -162,9 +158,9 @@ impl super::TypeCheck for Expr {
                         "Type of {e} must be known before a refference to it can be constructed"
                     )),
                 }?;
-                let expected = UnaryOp::BorrowMut.return_type(got.clone())?;
+                let expected = UnaryOp::Borrow.return_type(got.clone())?;
 
-                match UnaryOp::BorrowMut.type_check(got.clone()) {
+                match UnaryOp::Borrow.type_check(got.clone()) {
                     true => {
                         meta.ref_counter = counter;
                         Ok(expected)

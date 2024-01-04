@@ -1,11 +1,12 @@
 use rnr::codegen::CompileTarget;
 use rnr::prelude::*;
-use rnr::{check, eval};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
 extern crate strip_ansi_escapes;
+
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rnr", about = "RNR Rust In Rust - Let's Rock'n Roll")]
 struct Opt {
@@ -60,7 +61,7 @@ fn main() {
 
     print!("rnr input:\n{}", s);
     print!("rnr parsing: ");
-    let prog: Ast<Prog> = s.into();
+    let mut prog: Ast<Prog> = s.into();
     println!("\nrnr prog:\n{}", prog);
     if opt.type_check {
         print!("rnr type checking: ");
@@ -71,6 +72,14 @@ fn main() {
                 return;
             }
         }
+        match borrow_check!(prog) {
+            Ok(_) => println!("Borrow checker passed"),
+            Err(e) => {
+                eprintln!("Error : {:?} occured while borrowchecking", e);
+                return;
+            }
+        }
+        println!("Program after linearization {prog}");
     }
 
     if opt.vm {
@@ -85,6 +94,9 @@ fn main() {
         }
     }
 
+    let a = 2;
+    let a = &a;
+    let _b = *a;
     if opt.target.is_none() {
         return;
     }

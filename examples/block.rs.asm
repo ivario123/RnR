@@ -6,18 +6,18 @@ main_GLOBAL_SCOPEAddiu sp, sp, -4 (0xfffc)# enter frame 'fn main', push ra
             Addiu sp, sp, -4 (0xfffc)# push fp
             Sw fp, 0[sp] (0x0000)
             Add fp, zero, sp
-            Addiu sp, sp, -4 (0xfffc)# allocate 'a'
-            Ori t0, zero, 6 (0x0006)# 'a = 6', integer constant 6, 16 bit constant
+            Addiu sp, sp, -4 (0xfffc)# allocate '>2#2!1_a'
+            Ori t0, zero, 6 (0x0006)# '>2#2!1_a = 6', integer constant 6, 16 bit constant
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)
             Lw t0, 0[sp] (0x0000)# pop t0
             Addiu sp, sp, 4 (0x0004)
-            Sw t0, -4[fp] (0xfffc)# store 'a' at offset -4
-            Addiu sp, sp, -4 (0xfffc)# allocate '_b'
-            Lw t0, -4[fp] (0xfffc)# '_b = {
-    a = a + 1;
-    a
-}', 'a = a + 1', op +, load 'a' at offset -4
+            Sw t0, -4[fp] (0xfffc)# store '>2#2!1_a' at offset -4
+            Addiu sp, sp, -4 (0xfffc)# allocate '>2#3!1__b'
+            Lw t0, -4[fp] (0xfffc)# '>2#3!1__b = {
+    >2#2!1_a = >2#2!1_a + 1;
+    >2#2!1_a
+}', '>2#2!1_a = >2#2!1_a + 1', op +, load '>2#2!1_a' at offset -4
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)
             Ori t0, zero, 1 (0x0001)# integer constant 1, 16 bit constant
@@ -32,13 +32,13 @@ main_GLOBAL_SCOPEAddiu sp, sp, -4 (0xfffc)# enter frame 'fn main', push ra
             Sw t0, 0[sp] (0x0000)
             Lw t0, 0[sp] (0x0000)# pop t0
             Addiu sp, sp, 4 (0x0004)
-            Sw t0, -4[fp] (0xfffc)# store 'a' at offset -4
-            Lw t0, -4[fp] (0xfffc)# a, load 'a' at offset -4
+            Sw t0, -4[fp] (0xfffc)# store '>2#2!1_a' at offset -4
+            Lw t0, -4[fp] (0xfffc)# >2#2!1_a, load '>2#2!1_a' at offset -4
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)
             Lw t0, 0[sp] (0x0000)# pop t0
             Addiu sp, sp, 4 (0x0004)
-            Sw t0, -8[fp] (0xfff8)# store '_b' at offset -8
+            Sw t0, -8[fp] (0xfff8)# store '>2#3!1__b' at offset -8
             Ori t0, zero, 0 (0x0000)# exit block semi, () return value, 16 bit constant
             Addiu sp, sp, -4 (0xfffc)# push t0
             Sw t0, 0[sp] (0x0000)
