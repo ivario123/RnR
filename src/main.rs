@@ -79,7 +79,7 @@ fn main() {
                 return;
             }
         }
-        println!("Program after linearization {prog}");
+        println!("Program after linearization : \n{prog}");
     }
 
     if opt.vm {

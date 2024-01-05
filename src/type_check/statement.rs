@@ -92,13 +92,41 @@ impl super::TypeCheck for Statement {
                         }
                     }
                     Expr::UnOp(UnaryOp::Dereff, e) => {
+                        //let ty = e.check(env, env.len() - 1)?;
+                        fn get_base_expression(expr: Expr) -> Expr {
+                            match expr {
+                                Expr::UnOp(_op, e) => get_base_expression(*e.clone()),
+                                e => e,
+                            }
+                        }
+                        let ty = get_base_expression(*e.clone()).check(env, idx)?;
+                        fn check_mut(ty: Type) -> Result<(), TypeErr> {
+                            match ty.clone() {
+                                Type::MutRef(r) => {
+                                    if let Type::Ref(_) = *r.0.clone() {
+                                        return Err(format!(
+                                            "Cannot assign to immutable refference {:?}",
+                                            r.0
+                                        ));
+                                    }
+                                    check_mut(*r.0)
+                                }
+                                Type::Ref(_e) => Err(format!("Cannot treat {ty} as &mut")),
+                                _ => Ok(()),
+                            }
+                        }
+                        check_mut(ty)?;
+                        fn refferand(e: Expr, env: &mut TypeEnv) -> Result<String, TypeErr> {
+                            let id = e;
+                            match id {
+                                Expr::Ident(i) => Ok(i),
+                                Expr::UnOp(UnaryOp::Dereff, e) => refferand(*e, env),
+                                e => Err(format!("Cannot treat {e} as an expression")),
+                            }
+                        }
                         let id = match *e.clone() {
                             Expr::Ident(i) => i,
-                            e => {
-                                return Err(format!(
-                                    "Cannot derefference non identifier expression {e}"
-                                ))
-                            }
+                            e => refferand(e, env)?,
                         };
 
                         let ty = e.check(env, env.len() - 1)?;

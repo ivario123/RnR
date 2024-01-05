@@ -9,7 +9,6 @@ impl Expr {
     fn linearize<'a>(
         &'a mut self,
         env: &mut Env<BCScope<'a>>,
-        dereff_depth: &mut usize,
     ) -> Result<Option<(String, BorrowValue)>, BCError> {
         match self {
             Expr::Ident(i) => {
@@ -17,12 +16,12 @@ impl Expr {
                 *i = meta.hash();
             }
             Expr::BinOp(_op, lhs, rhs) => {
-                let _ = lhs.linearize(env, dereff_depth)?;
-                let _ = rhs.linearize(env, dereff_depth)?;
+                let _ = lhs.linearize(env)?;
+                let _ = rhs.linearize(env)?;
             }
             Expr::UnOp(UnaryOp::BorrowMut, e) => {
                 let e_clone = e.clone();
-                let _ = e.linearize(env, dereff_depth)?;
+                let _ = e.linearize(env)?;
                 let id = match *e_clone.clone() {
                     Expr::Ident(_id) => env.format_ident(*e_clone).map_err(BCError::EnvError)?,
                     e => Err(BCError::InvalidIdentifierType(e.clone()))?,
@@ -37,7 +36,7 @@ impl Expr {
             }
             Expr::UnOp(UnaryOp::Borrow, e) => {
                 let e_clone = e.clone();
-                e.linearize(env, dereff_depth)?;
+                e.linearize(env)?;
                 let id = env.format_ident(*e_clone).map_err(BCError::EnvError)?;
 
                 return Ok(Some((
@@ -50,28 +49,23 @@ impl Expr {
             }
             Expr::UnOp(UnaryOp::Dereff, rhs) => {
                 let e_clone = rhs.clone();
-                rhs.linearize(env, dereff_depth)?;
+                rhs.linearize(env)?;
                 match *e_clone.clone() {
                     Expr::Ident(_) => {
                         let id = env.format_ident(*e_clone).map_err(BCError::EnvError)?;
-                        *dereff_depth += 1;
-                        env.dereff(&id, *dereff_depth)?;
+                        env.dereff(&id)?;
                     }
-                    // This is already handled
-                    Expr::UnOp(UnaryOp::Borrow, _)
-                    | Expr::UnOp(UnaryOp::BorrowMut, _)
-                    | Expr::UnOp(UnaryOp::Dereff, _) => {}
                     e => return Err(BCError::InvalidIdentifierType(e)),
                 }
             }
             Expr::UnOp(_op, rhs) => {
-                rhs.linearize(env, dereff_depth)?;
+                rhs.linearize(env)?;
             }
             Expr::Par(e) => {
-                e.linearize(env, dereff_depth)?;
+                e.linearize(env)?;
             }
             Expr::IfThenElse(condition, block, other_block) => {
-                let _ = condition.linearize(env, dereff_depth)?;
+                let _ = condition.linearize(env)?;
                 let _ = block.linearize(env)?;
                 if let Some(block) = other_block {
                     let _ = block.linearize(env);
@@ -79,12 +73,12 @@ impl Expr {
             }
             Expr::Array(e) => {
                 for el in e {
-                    let _ = el.linearize(env, dereff_depth)?;
+                    let _ = el.linearize(env)?;
                 }
             }
             Expr::Index(id, value) | Expr::IndexMut(id, value) => {
-                id.linearize(env, dereff_depth)?;
-                value.linearize(env, dereff_depth)?;
+                id.linearize(env)?;
+                value.linearize(env)?;
             }
             Expr::FuncCall(f) => f.linearize(env)?,
             Expr::Block(b) => {
@@ -100,7 +94,7 @@ impl Linearize for Statement {
     fn linearize<'a>(&'a mut self, env: &mut Env<BCScope<'a>>) -> Result<(), BCError> {
         match self {
             Statement::Let(ident, _mutable, _, Some(rhs)) => {
-                let is_borrow = rhs.linearize(env, &mut 0)?;
+                let is_borrow = rhs.linearize(env)?;
                 let ident_clone = ident.clone();
                 env.declare(Box::new(ident))?;
                 if let Some((target, mut borrow_value)) = is_borrow {
@@ -119,9 +113,9 @@ impl Linearize for Statement {
                 Ok(())
             }
             Statement::Assign(ident, rhs) => {
-                let is_borrow = rhs.linearize(env, &mut 0)?;
+                let is_borrow = rhs.linearize(env)?;
                 let ident_clone = ident.clone();
-                ident.linearize(env, &mut 0)?;
+                ident.linearize(env)?;
                 if let Some((target, mut borrow_value)) = is_borrow {
                     let id = env.format_ident(ident_clone).map_err(BCError::EnvError)?;
                     borrow_value.id = id;
@@ -130,12 +124,12 @@ impl Linearize for Statement {
                 Ok(())
             }
             Statement::While(stmt, block) => {
-                stmt.linearize(env, &mut 0)?;
+                stmt.linearize(env)?;
                 block.linearize(env)?;
                 Ok(())
             }
             Statement::Expr(e) => {
-                e.linearize(env, &mut 0)?;
+                e.linearize(env)?;
                 Ok(())
             }
             Statement::Block(b) => b.linearize(env),
@@ -147,7 +141,7 @@ impl Linearize for Statement {
 impl Linearize for FuncCall {
     fn linearize<'a>(&'a mut self, env: &mut Env<BCScope<'a>>) -> Result<(), BCError> {
         for arg in self.args.iter_mut() {
-            arg.linearize(env, &mut 0)?;
+            arg.linearize(env)?;
         }
         Ok(())
     }

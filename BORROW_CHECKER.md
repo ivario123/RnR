@@ -27,6 +27,7 @@ let a = 2;
 let b = &a;
 let a = 2;
 let c = &a;
+*b;
 ```
 
 Would invalidate $b$, but this does not need to be the case as no other new access will ever be made to a, the b reference will always be sound.

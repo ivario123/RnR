@@ -165,7 +165,7 @@ impl super::TypeCheck for Expr {
                         meta.ref_counter = counter;
                         Ok(expected)
                     }
-                    false => Err(format!("Cannot perform {} on {got}", UnaryOp::BorrowMut)),
+                    false => Err(format!("Cannot perform {} on {got}", UnaryOp::Borrow)),
                 }
             }
             Expr::UnOp(op, e) => {

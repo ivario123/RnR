@@ -3,8 +3,8 @@ fn main() {
     a;
     let mut a_2 = 2;
     {
-    let b = &mut a_2;
-    b;
+        let b = &mut a_2;
+        b;
     };
     let c = &a_2;
     c;

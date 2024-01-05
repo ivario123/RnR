@@ -51,14 +51,15 @@ impl UnOpPreDeclaration for Statement {
         index: &mut usize,
     ) -> Result<(), EnvErr> {
         let ret = match self {
-            Statement::Let(_, _, _, Some(rhs))
-            | Statement::Assign(_, rhs)
-            | Statement::Expr(rhs) => rhs.pre_declare(counter, block, index),
+            Statement::Let(_, _, _, Some(rhs)) | Statement::Expr(rhs) => {
+                rhs.pre_declare(counter, block, index)
+            }
             Statement::While(cond, b) => {
                 cond.pre_declare(counter, block, index)?;
                 b.pre_declare(counter, block, index)
             }
             Statement::Block(b) => b.pre_declare(counter, block, index),
+            Statement::Assign(_id, rhs) => rhs.pre_declare(counter, block, index),
             _ => Ok(()),
         };
         ret

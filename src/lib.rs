@@ -40,7 +40,7 @@ pub mod prelude {
 pub trait AstNode: Eval + TypeCheck + std::fmt::Debug {}
 
 /// Ast wrapper for improved error messages
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Ast<T: AstNode> {
     t: T,
 }
@@ -105,7 +105,7 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
                     line - 4..line + 5,
                 );
 
-                eprintln!("Error {e} ocurred on line {} \n{lines}", line);
+                eprintln!("Error {e} ocurred on line {} \n{lines}", line + 1);
 
                 panic!("Invalid input");
             }
@@ -114,6 +114,7 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
         Self { t }
     }
 }
+
 impl<T: AstNode> Eval for Ast<T> {
     fn eval(
         &self,

@@ -161,7 +161,7 @@ where
             targets = borrows.clone();
             any_mut = *prev_any_mut || is_mutable;
         }
-        println!("{:?}", (is_mutable, any_mut, targets.len()));
+        //println!("{:?}", (is_mutable, any_mut, targets.len()));
         match (is_mutable, any_mut, targets.len()) {
             (_, true, _) => return Err(BCError::MultipleRefWhileMutRefAlive),
             (true, false, 0) => {}
@@ -229,20 +229,23 @@ where
         }
     }
 
-
-    pub fn dereff(&mut self, target_id: &String) -> Result<(), BCError> {
-        println!("{:?},{:?}",self.borrowers,target_id);
+    pub fn dereff(&mut self, target_id: &String, dereff_depth: usize) -> Result<(), BCError> {
+        //println!("{:?},{:?},{dereff_depth:?}", self.borrowers, target_id);
         let ref_id = match self.borrowers.get(target_id) {
-            Some(ref_id) => Ok(ref_id),
+            Some(ref_id) => Ok(ref_id.clone()),
             None => Err(BCError::DerrefOfOutOfScope),
         }?;
 
         // Validate on dereference
-        match self.borrows.map.get(ref_id) {
+        match self.borrows.map.get(&ref_id) {
             Some((_, r)) => {
                 for el in r {
                     if el.id == *target_id {
-                        return Ok(());
+                        //println!("Was borrowing {ref_id:?}");
+                        if dereff_depth == 0 {
+                            return Ok(());
+                        }
+                        return self.dereff(&ref_id, dereff_depth - 1);
                     }
                 }
                 return Err(BCError::DerrefOfOutOfScope);
@@ -250,5 +253,4 @@ where
             None => return Err(BCError::DerrefOfOutOfScope),
         }
     }
-
 }

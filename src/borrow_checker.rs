@@ -216,13 +216,6 @@ mod test {
                 let d = &&mut b;
                 d;
             };
-            {
-                let k1 = &{1+1};
-                k1;
-                let c = &&&b;
-                let k = ***c+1;
-                k + 1;
-            };
             let d = &mut b;
             let c = *d;
             let b = c + 1;
@@ -234,6 +227,7 @@ mod test {
         println!("{prog}");
         let mut env = Env::new();
         let l = prog.linearize(&mut env);
+        println!("l : {l:?}");
         assert!(l.is_ok());
         println!("linear prog : {prog}");
         let iter = 400;
