@@ -21,14 +21,13 @@ impl super::TypeCheck for Expr {
                 };
 
                 let res = scope.0.get(&id);
-
                 match (res, idx) {
                     (Some(t), _) => match &t.ty {
                         Some(t) => Ok(t.clone()),
                         _ => Err(format!("Type of variable {id} must be known at this point")),
                     },
                     // Look for identifier in earlier scopes
-                    (_, 0) => Err(format!("variable {id} not found")),
+                    (None, 0) => Err(format!("variable {id} not found")),
                     (_, _) => self.check(env, idx - 1),
                 }
             }

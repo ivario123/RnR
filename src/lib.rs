@@ -76,56 +76,78 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
                     true => Some(el),
                     false => None,
                 });
-            let mut ret = vec![];
+            let mut ret = Vec::with_capacity(el.len());
             for (el, idx) in intermediate.zip(r_clone.into_iter()) {
                 if el.is_some() {
+                    let el = el.unwrap();
                     match (idx > line, idx < end_line, idx == line, idx == end_line) {
                         (true, true, _, _) => {
-                            ret.push(error(format!("{idx}|\t{}", el.unwrap().clone()), true))
+                            ret.push(format!("{idx}|\t{}", error(el.clone(), true, 0, None)))
                             // Add some cool new processing to highlight errors on multiple lines
                         }
-                        (_, _, true, _) | (_, _, _, true) => {
+                        (_, _, true, _) => {
                             ret.push(format!(
                                 "{idx}|\t{}<-- Occured here",
-                                error(el.unwrap().clone(), true)
+                                error(
+                                    el.clone(),
+                                    true,
+                                    cols.0,
+                                    match line == end_line {
+                                        true => Some(cols.1),
+                                        false => None,
+                                    }
+                                )
                             ));
-                            // Assume errors are 1 line in this case.
+                        }
+                        (_, _, _, true) => {
                             ret.push(format!(
-                                "\t{}{}",
-                                " ".repeat(cols.0),
-                                error(format!("|{}|", "-".repeat(cols.1 - cols.0 - 2)), false)
-                            ))
+                                "{idx}|\t{}<-- Occured here",
+                                error(el.clone(), true, 0, Some(cols.1))
+                            ));
                         }
                         //(_, _, true, err) => {
                         //    let str = format!("{idx}|\t{}", el.unwrap().clone());
                         //    ret.push(error())
                         //}
-                        _ => ret.push(format!("{idx}|\t{}", el.unwrap().clone())),
+                        _ => ret.push(format!("{idx}|\t{}", el.clone())),
                     }
                 }
             }
             ret.join("\n")
         };
+        // This would be quite easy to re write to be cleaner, but I do not have time to spend on
+        // that
+        fn rec_sub(el: usize, target: usize) -> usize {
+            if target == 0 {
+                return el;
+            }
+            match el.checked_sub(target) {
+                Some(value) => value,
+                _ => rec_sub(el, target - 1),
+            }
+        }
 
         let ts: proc_macro2::TokenStream = match value.parse() {
             Ok(ts) => ts,
             Err(e) => {
                 let line = e.span().start().line;
                 let cols = (e.span().start().column, e.span().end().column);
-                let line_offset = match line.checked_sub(4) {
-                    Some(e) => e,
-                    None => 0,
-                };
+                let line_offset = rec_sub(line, 4);
                 let rel_line = match line.checked_sub(line_offset) {
                     Some(e) => e,
                     None => 0,
                 };
-                let end_line = e.span().end().line;
-                let line_offset_end = match end_line.checked_sub(4) {
+                let rel_line = match rel_line.checked_sub(1) {
                     Some(e) => e,
                     None => 0,
                 };
+                let end_line = e.span().end().line;
+                let line_offset_end = rec_sub(end_line, 4);
                 let rel_line_end = match end_line.checked_sub(line_offset_end) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let rel_line_end = match rel_line_end.checked_sub(1) {
                     Some(e) => e,
                     None => 0,
                 };
@@ -141,7 +163,7 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
                     cols,
                 );
 
-                eprintln!("Error {e} ocurred on line {} \n{lines}", line + 1);
+                eprintln!("Error {e} ocurred while parsing \n{lines}");
 
                 panic!("Invalid input");
             }
@@ -151,20 +173,22 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
             Err(e) => {
                 let line = e.span().start().line;
                 let cols = (e.span().start().column, e.span().end().column);
-                let line_offset = match line.checked_sub(4) {
-                    Some(e) => e,
-                    None => 0,
-                };
+                let line_offset = rec_sub(line, 4);
                 let rel_line = match line.checked_sub(line_offset) {
                     Some(e) => e,
                     None => 0,
                 };
-                let end_line = e.span().end().line;
-                let line_offset_end = match end_line.checked_sub(4) {
+                let rel_line = match rel_line.checked_sub(1) {
                     Some(e) => e,
                     None => 0,
                 };
+                let end_line = e.span().end().line;
+                let line_offset_end = rec_sub(end_line, 4);
                 let rel_line_end = match end_line.checked_sub(line_offset_end) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let rel_line_end = match rel_line_end.checked_sub(1) {
                     Some(e) => e,
                     None => 0,
                 };
@@ -179,7 +203,7 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
                     cols,
                 );
 
-                eprintln!("Error {e} ocurred on line {} \n{lines}", line + 1);
+                eprintln!("Error {e} ocurred while parsing \n{lines}");
 
                 panic!("Invalid input");
             }
@@ -239,7 +263,10 @@ macro_rules! discard {
 #[macro_export]
 macro_rules! check {
     ($id:ident) => {
-        $id.check(&mut TypeEnv::new(), 0)
+        match $id.pre_declare_top(&mut 0, &mut 0) {
+            Ok(_) => $id.check(&mut TypeEnv::new(), 0),
+            Err(_) => todo!(),
+        }
     };
 }
 #[macro_export]

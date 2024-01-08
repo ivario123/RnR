@@ -36,7 +36,7 @@ pub mod color_test {
     pub fn lit(id: String) -> String {
         id
     }
-    pub fn error(id: String, _underline: bool) -> String {
+    pub fn error(id: String, _underline: bool, _start: usize, _end: Option<usize>) -> String {
         id
     }
 }
@@ -74,20 +74,32 @@ pub mod color_normal {
     pub fn lit(id: String) -> String {
         Red.paint(id).to_string()
     }
-    pub fn error(id: String, underline: bool) -> String {
+    pub fn error(id: String, underline: bool, start: usize, end: Option<usize>) -> String {
         let mut collector = String::new();
         let style = match underline {
             true => Red.underline(),
             false => Red.into(),
         };
         let mut started = false;
+        let mut counter = 0;
         for el in id.chars() {
             if started || el != ' ' {
                 started = true;
-                collector = format!("{}{}", collector, style.paint(el.to_string()).to_string());
+                if counter >= start {
+                    if let Some(last_col) = end {
+                        if counter >= last_col {
+                            collector.push(el.clone());
+                            continue;
+                        }
+                    }
+                    collector.push_str(style.paint(el.to_string()).to_string().as_str());
+                } else {
+                    collector.push(el.clone());
+                }
             } else {
                 collector.push(' ');
             }
+            counter += 1;
         }
         collector
     }

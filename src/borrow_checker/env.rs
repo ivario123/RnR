@@ -225,6 +225,7 @@ where
                 }
                 Err(e) => Err(e),
             },
+            Expr::UnOp(_op, expr) => self.format_ident(*expr),
             e => Err(EnvErr::CannotTreatAsIdentifier(e)),
         }
     }

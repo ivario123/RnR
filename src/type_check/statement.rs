@@ -128,8 +128,7 @@ impl super::TypeCheck for Statement {
                             Expr::Ident(i) => i,
                             e => refferand(e, env)?,
                         };
-
-                        let ty = e.check(env, env.len() - 1)?;
+                        let ty = e.check(env, last_scope)?;
                         match ty {
                             Type::MutRef(crate::ast::types::Ref(ty, _, _)) => Ok((id, Some(*ty))),
                             e => Err(format!("Cannot treat {e} as a mutable borrow")),
@@ -146,7 +145,7 @@ impl super::TypeCheck for Statement {
                             Some(t) => match rhs == t {
                                 true => Ok(Some(Type::Unit)),
                                 _ => Err(format!(
-                                    "Invalid return type for expression got {rhs} expected {t}"
+                                    "Invalid return type for expression {e} got {rhs} expected {t}\noccured in:\n\t{self}"
                                 )),
                             },
                             _ => {
@@ -181,11 +180,10 @@ impl super::TypeCheck for Statement {
             },
             Statement::FnDecleration(func) => Ok(Some(func.check(env, last_scope)?)),
         };
-        match (ret, idx) {
-            (Ok(Some(value)), _) => Ok(value),
-            (Err(e), 0) => Err(e),
-            (Err(_), idx) => self.check(env, idx - 1),
-            (Ok(None), _) => Err("Type must be known at this point".to_owned()),
+        match ret {
+            Ok(Some(value)) => Ok(value),
+            Err(e) => Err(e),
+            Ok(None) => Err("Type must be known at this point".to_owned()),
         }
     }
 }
