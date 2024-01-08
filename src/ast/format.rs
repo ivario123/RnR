@@ -10,7 +10,7 @@ enum KeyWords {
 }
 
 #[cfg(test)]
-mod color_test {
+pub mod color_test {
 
     impl std::fmt::Display for super::KeyWords {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -36,9 +36,13 @@ mod color_test {
     pub fn lit(id: String) -> String {
         id
     }
+    pub fn error(id: String, _underline: bool) -> String {
+        id
+    }
 }
 #[cfg(not(test))]
-mod color_normal {
+pub mod color_normal {
+
     use ansi_term::Colour::Blue;
     use ansi_term::Colour::Cyan;
     use ansi_term::Colour::Purple;
@@ -69,6 +73,23 @@ mod color_normal {
     }
     pub fn lit(id: String) -> String {
         Red.paint(id).to_string()
+    }
+    pub fn error(id: String, underline: bool) -> String {
+        let mut collector = String::new();
+        let style = match underline {
+            true => Red.underline(),
+            false => Red.into(),
+        };
+        let mut started = false;
+        for el in id.chars() {
+            if started || el != ' ' {
+                started = true;
+                collector = format!("{}{}", collector, style.paint(el.to_string()).to_string());
+            } else {
+                collector.push(' ');
+            }
+        }
+        collector
     }
 }
 #[cfg(not(test))]

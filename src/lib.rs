@@ -7,6 +7,11 @@ use prelude::TypeCheck;
 use syn::parse::Parse;
 use vm::Eval;
 
+#[cfg(not(test))]
+use ast::color_normal::*;
+#[cfg(test)]
+use ast::color_test::*;
+
 // common definitions
 //pub mod common;
 pub mod error;
@@ -58,7 +63,11 @@ impl<T: ast::HIR> ast::HIR for HIR<T> {
 
 impl<T: AstNode + Parse> From<String> for Ast<T> {
     fn from(value: String) -> Self {
-        let map = |el: Vec<String>, r: std::ops::Range<usize>| {
+        let map = |el: Vec<String>,
+                   r: std::ops::Range<usize>,
+                   line: usize,
+                   end_line: usize,
+                   cols: (usize, usize)| {
             let r_clone = r.clone();
             let intermediate = el
                 .iter()
@@ -70,7 +79,29 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
             let mut ret = vec![];
             for (el, idx) in intermediate.zip(r_clone.into_iter()) {
                 if el.is_some() {
-                    ret.push(format!("{idx}|\t{}", el.unwrap().clone()));
+                    match (idx > line, idx < end_line, idx == line, idx == end_line) {
+                        (true, true, _, _) => {
+                            ret.push(error(format!("{idx}|\t{}", el.unwrap().clone()), true))
+                            // Add some cool new processing to highlight errors on multiple lines
+                        }
+                        (_, _, true, _) | (_, _, _, true) => {
+                            ret.push(format!(
+                                "{idx}|\t{}<-- Occured here",
+                                error(el.unwrap().clone(), true)
+                            ));
+                            // Assume errors are 1 line in this case.
+                            ret.push(format!(
+                                "\t{}{}",
+                                " ".repeat(cols.0),
+                                error(format!("|{}|", "-".repeat(cols.1 - cols.0 - 2)), false)
+                            ))
+                        }
+                        //(_, _, true, err) => {
+                        //    let str = format!("{idx}|\t{}", el.unwrap().clone());
+                        //    ret.push(error())
+                        //}
+                        _ => ret.push(format!("{idx}|\t{}", el.unwrap().clone())),
+                    }
                 }
             }
             ret.join("\n")
@@ -80,15 +111,37 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
             Ok(ts) => ts,
             Err(e) => {
                 let line = e.span().start().line;
+                let cols = (e.span().start().column, e.span().end().column);
+                let line_offset = match line.checked_sub(4) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let rel_line = match line.checked_sub(line_offset) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let end_line = e.span().end().line;
+                let line_offset_end = match end_line.checked_sub(4) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let rel_line_end = match end_line.checked_sub(line_offset_end) {
+                    Some(e) => e,
+                    None => 0,
+                };
+
                 let lines = map(
                     value
                         .lines()
                         .map(|el| el.to_string())
                         .collect::<Vec<String>>(),
-                    line - 4..line + 5,
+                    line_offset..line + 5,
+                    rel_line,
+                    rel_line_end,
+                    cols,
                 );
 
-                eprintln!("Error {e} ocurred on line {} \n{lines}", line);
+                eprintln!("Error {e} ocurred on line {} \n{lines}", line + 1);
 
                 panic!("Invalid input");
             }
@@ -97,12 +150,33 @@ impl<T: AstNode + Parse> From<String> for Ast<T> {
             Ok(ts) => ts,
             Err(e) => {
                 let line = e.span().start().line;
+                let cols = (e.span().start().column, e.span().end().column);
+                let line_offset = match line.checked_sub(4) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let rel_line = match line.checked_sub(line_offset) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let end_line = e.span().end().line;
+                let line_offset_end = match end_line.checked_sub(4) {
+                    Some(e) => e,
+                    None => 0,
+                };
+                let rel_line_end = match end_line.checked_sub(line_offset_end) {
+                    Some(e) => e,
+                    None => 0,
+                };
                 let lines = map(
                     value
                         .lines()
                         .map(|el| el.to_string())
                         .collect::<Vec<String>>(),
-                    line - 4..line + 5,
+                    line_offset..line + 5,
+                    rel_line,
+                    rel_line_end,
+                    cols,
                 );
 
                 eprintln!("Error {e} ocurred on line {} \n{lines}", line + 1);
