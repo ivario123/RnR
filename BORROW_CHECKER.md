@@ -1,4 +1,4 @@
-# Borrow checking and linearization
+# Borrow checking and renaming
 
 The borrow checker works based on 2 simple data structures, 
 both are hashmaps, one hashmap that maps $`1->many`$ [`borrows`](./src/borrow_checker/env.rs#13) and one hashmap that
@@ -58,7 +58,7 @@ The system I have implemented does not support borrowing values that are not ide
 let a = &{2+3};
 ```
 
-is invalid. To borrow intermediate values, the system uses introduces new identifier in a separate pass by recursively introducing new identifiers for every right hand side of unary operators until the expression can be determined by a single unary operator on a single identifier.
+Is invalid. To borrow intermediate values, the system uses introduces new identifier in a separate pass by recursively introducing new identifiers for every right hand side of unary operators until the expression can be determined by a single unary operator on a single identifier.
 The above code would be represented as
 
 ```rust
@@ -66,7 +66,7 @@ let #1_unop = {2+3};
 let a = &#1_unop;
 ```
 
-which now works with the above described paradigm.
+Which now works with the above described paradigm.
 
 ## End Of Life
 
@@ -86,4 +86,4 @@ let mut b = &a;
 *b; // Error here
 ```
 
-will be rejected. When the system destroys a reference it removes the variables that borrow it from the `borrowers` hashmap, this means that checking if a variable is valid when dereferencing it is as simple as checking if the key exists in the `borrowers` hashmap.
+Will be rejected. When the system destroys a reference it removes the variables that borrow it from the `borrowers` hash map, this means that checking if a variable is valid when dereferencing it is as simple as checking if the key exists in the `borrowers` hash map.
